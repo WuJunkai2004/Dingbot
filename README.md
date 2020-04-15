@@ -38,4 +38,4 @@ should be signed.
 ``from send import *``  
 　　Then you can use its function easily.  
 #### use
-　　It is easy to use the library.If you import share.py,you can 
+　　If you import share.py,you can 
