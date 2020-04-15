@@ -6,9 +6,9 @@
 　　You even can use it as a command line tool if you import it on python IDLE.
 ### Usage method
 #### module
-　　It's easy to see that it's divided into two modules.The 'send' is the base and the 'share'  
-is little higher than 'send'.  
-　　The tree for send.py:  
+　　It's easy to see that it's divided into two modules.The `send.py` is the base and the `share.py`  
+is little higher than `send.py`.  
+　　The tree for `send.py`:  
 > send.py  
 >> urls()  
 >> send()  
@@ -18,8 +18,8 @@ is little higher than 'send'.
 >> push()  
 >> feed()  
 
-　　send.py is the base of the library.So unless there is a bug, it will not be updated.  
-　　share.py encapsulates the sharing links of some common websites.It may be updated frequently.
+　　`send.py` is the base of the library.So unless there is a bug, it will not be updated.  
+　　`share.py` encapsulates the sharing links of some common websites.It may be updated frequently.
 #### prepare
 　　First,you should have the Webhook and the key for a Dingtalk robot.And its security settings  
 should be signed.  
@@ -38,4 +38,4 @@ should be signed.
 ``from send import *``  
 　　Then you can use its function easily.  
 #### use
-　　If you import share.py,you can 
+　　If you import `share.py`,you can 
