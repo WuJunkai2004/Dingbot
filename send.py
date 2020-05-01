@@ -1,29 +1,28 @@
 # coding=utf-8
 
-# version=2.00.0
+# version=2.10.0
 
-import sys
-version=sys.version_info.major
-
-if  (version==2):
-    from urllib import quote_plus as plus
+try:
     from urllib2 import urlopen as post
     from urllib2 import Request as seal
     from urllib2 import urlopen as get
-elif(version==3):
-    from urllib.parse import quote_plus as plus
+    version=2
+except ImportError:
     from urllib2.request import urlopen as post
     from urllib2.request import Request as seal
     from urllib2.request import urlopen as get
+    version=3
 
-from base64 import b64encode as base
-from hashlib import sha256 as sha
 from json import dumps as json
-from time import time
-from hmac import new
 
-def python2(self):
+def _python2(self):
     ## python2 的加密算法
+    from urllib import quote_plus as plus
+    from base64 import b64encode as base
+    from hashlib import sha256 as sha
+    from time import time
+    from hmac import new
+
     timestamp          = long(round(time() * 1000))
     secret_enc         = bytes(self.secret).encode('utf-8')
     string_to_sign     = '{}\n{}'.format(timestamp, self.secret)
@@ -32,8 +31,15 @@ def python2(self):
     sign               = plus(base(hmac_code))
     return self.url+'&timestamp=%s&sign=%s'%(timestamp,sign)
 
-def python3(self):
+
+def _python3(self):
     ## python3 的加密算法
+    from urllib.parse import quote_plus as plus
+    from base64  import b64encode as base
+    from hashlib import sha256 as sha
+    from time import time
+    from hmac import new
+
     timestamp          = str(round(time.time() * 1000))
     secret_enc         = secret.encode('utf-8')
     string_to_sign     = '{}\n{}'.format(timestamp, secret)
@@ -48,20 +54,20 @@ class Dingbot(object):
     def __init__(self,name):
         '初始化'
         self.name=name
-        self.url=config[name]['webhook']
-        self.secret=config[name]['secret']
+        self.url=_config[name]['webhook']
+        self.secret=_config[name]['secret']
         if  (version==2):
-            self.urls=python2
+            self.urls=_python2
         elif(version==3):
-            self.urls=python3
+            self.urls=_python3
 
     def send(self,msg):
         '发送消息'
         requ=seal(self.urls(self),data=json(msg).encode("utf-8"),headers={'Content-Type': 'application/json' })
-        print eval(post(requ).read())
+        recode=eval(post(requ).read())
+        return recode
 
-
-    def text(self,message,at=[]):
+    def text(self,text,at=[]):
         '文本信息'
         phone=[]
         every=False
@@ -72,7 +78,7 @@ class Dingbot(object):
         msg={
             'msgtype':'text',
             'text'   :{
-                "content":message
+                "content":text
                 },
             'at'     :{
                 'atMobiles':phone,
@@ -80,7 +86,6 @@ class Dingbot(object):
                 }
             }
         return self.send(msg)
-
 
     def link(self,title,text,url,pic=''):
         '链接'
@@ -95,7 +100,7 @@ class Dingbot(object):
             }
         return self.send(msg)
 
-    def markdown(self,title,text,at=[]):
+    def markdown(self,title,markdown,at=[]):
         'markdown'
         phone=[]
         every=False
@@ -107,7 +112,7 @@ class Dingbot(object):
             "msgtype":"markdown",
             "markdown":{
                 "title":title,
-                "text" :text
+                "text" :markdown
                 },
             "at"      :{
                 "atMobiles":phone,
@@ -116,18 +121,16 @@ class Dingbot(object):
             }
         return self.send(msg)
 
-    def push(self,title,text,*button):
+    def push(self,title,markdown,*button):
         '单条消息推送'
-        btns=[]
-        for i in map(dict,map(lambda x:zip(('title','actionURL'),x),button)):
-            btns.append(i)
+        btns=list(map(dict,map(lambda x:zip(('title','actionURL'),x),button)))
         if(len(btns)==1):
             ## 整体跳转ActionCard类型
             msg={
                 "msgtype": "actionCard",
                 'actionCard':{
                     'title':title,
-                    'text' :text,
+                    'text' :markdown,
                     'btnOrientation':'0',
                     'singleTitle'   :btns[0]['title'],
                     'singleURL'     :btns[0]['actionURL'],
@@ -139,21 +142,33 @@ class Dingbot(object):
                 "msgtype": "actionCard",
                 "actionCard": {
                     "title": title,
-                    "text" : text,
+                    "text" : markdown,
                     "btns" : btns,
                     'btnOrientation':'0',
                     }
                 }
         return self.send(msg)
 
-    def feed(self,links):
+    def feed(self,*links):
         '订阅推送'
-        pass
+        if(len(links)==1 and type(links[0])!=str):
+            links=links[0]
+        link=list(map(dict,map(lambda x:zip(('title','messageURL','picURL'),x),links)))
+        msg={
+            "msgtype":"feedCard",
+            "feedCard":{
+                'links':link
+                }
+            }
+        return self.send(msg)
 
+try:
+    with open('config.json','r') as _fin:
+        _config=eval(_fin.read())
+except IOError:
+    with open('config.json','w') as _fout:
+        _fout.write('{}')
+    _config={}
 
-
-with open('config.json','r') as fin:
-    config=eval(fin.read())
-
-for i in config.keys():
-    exec('%s=Dingbot("%s")'%(i,i))
+for _ in _config.keys():
+    exec('%s=Dingbot("%s")'%(_,_))
