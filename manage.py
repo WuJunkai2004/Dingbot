@@ -22,6 +22,15 @@ def new(name):
         fout.write(config)
     print(u'加载完成')
 
+def table():
+    try:
+        with open('config.json','r') as fin:
+            config=eval(fin.read())
+    except IOError:
+        config={}
+    for i in config.keys():
+        print(i)
+
 def json(gets):
     key=gets.keys()
     text='{\n'

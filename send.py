@@ -3,17 +3,18 @@
 # version=2.10.0
 
 try:
-    from urllib2 import urlopen as post
-    from urllib2 import Request as seal
-    from urllib2 import urlopen as get
+    from urllib2 import urlopen as _urlopen
+    from urllib2 import Request as _request
     version=2
 except ImportError:
-    from urllib2.request import urlopen as post
-    from urllib2.request import Request as seal
-    from urllib2.request import urlopen as get
+    from urllib2.request import urlopen as _urlopen
+    from urllib2.request import Request as _request
     version=3
 
 from json import dumps as json
+
+get =lambda url,     headers={'Content-Type':'application/json'}:_urlopen(_request(url,None,headers))
+post=lambda url,data,headers={'Content-Type':'application/json'}:_urlopen(_request(url,data,headers))
 
 def _python2(self):
     ## python2 的加密算法
@@ -63,9 +64,8 @@ class Dingbot(object):
 
     def send(self,msg):
         '发送消息'
-        requ=seal(self.urls(self),data=json(msg).encode("utf-8"),headers={'Content-Type': 'application/json' })
-        recode=eval(post(requ).read())
-        return recode
+        recode=post(self.urls(self),data=json(msg).encode("utf-8"))
+        return eval(recode.read())
 
     def text(self,text,at=[]):
         '文本信息'

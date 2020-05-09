@@ -21,32 +21,32 @@ if(_config.keys()):
 
 def share(url):
     if  (url.find('www.bilibili.com/video')!=-1):
-        bilibili_video(url)
+        return bilibili_video(url)
     elif(url.find('www.bilibili.com/read')!=-1):
-        bilibili_read(url)
+        return bilibili_read(url)
     elif(url.find('www.bilibili.com/ranking')!=-1):
-        bilibili_rank(url)
+        return bilibili_rank(url)
     else:
-        robot.text(url)
+        return robot.text(url)
 
 def bilibili_video(url):
-    for i in re(r'(?<=<meta ).+?(?=>)').findall(get(seal(url,headers=headers)).read()):
+    for i in re(r'(?<=<meta ).+?(?=>)').findall(get(url,headers).read()):
         if  (i.find('itemprop="name"')       !=-1):
             title=re(r'(?<=content=").+(?=")').search(i).group()
         elif(i.find('itemprop="description"')!=-1):
             text =re(r'(?<=content=").+(?=")').search(i).group()
         elif(i.find('itemprop="image"'      )!=-1):
             image=re(r'(?<=content=").+(?=")').search(i).group()
-    robot.link(title,text,url,image)
+    return robot.link(title,text,url,image)
 
 def bilibili_read(url):
-    html =get(seal(url,headers=headers)).read()
+    html =get(url,headers).read()
     title=re(r'(?<=<title>).+?(?=</title>)').search(html).group()
     text =re(r'(?<=<meta name="description" content=").+?(?=">)').search(html).group()
-    robot.link(title,text,url,'https://i0.hdslb.com/bfs/archive/4de86ebf90b044bf9ba2becf042a8977062b3f99.png')
+    return robot.link(title,text,url,'https://i0.hdslb.com/bfs/archive/4de86ebf90b044bf9ba2becf042a8977062b3f99.png')
 
 def bilibili_rank(url,range=[0,10]):
-    html  =get(seal(url,headers=headers)).read()
+    html  =get(url,headers).read()
     lists =jsoff(re(r'(?<=__INITIAL_STATE__=){.+?}(?=;)').search(html).group())['rankList']
     urls  =re(r'(?<=<div class="img"><a href=").+?(?=" target="_blank">)').findall(html)[range[0]:range[1]]
     titles=[]
@@ -54,7 +54,7 @@ def bilibili_rank(url,range=[0,10]):
     for i in lists[range[0]:range[1]]:
         images.append(i['pic'].replace(r'\u002F',r'/'))
         titles.append((i['title']))
-    robot.feed(zip(titles,urls,images))
+    return robot.feed(zip(titles,urls,images))
 
 def picture(path=r'D:\用户目录\Pictures\wall.jpg'):
     image=open(path,'rb')
