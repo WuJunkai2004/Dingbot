@@ -11,9 +11,9 @@ except ImportError:
     from urllib2.request import Request as _request
     version=3
 
-from json import dumps as json
+import json
 
-get =lambda url,     headers={'Content-Type':'application/json'}:_urlopen(_request(url,None,headers))
+get =lambda url,     headers={'User-Agent':'Mozilla/5.0'}       :_urlopen(_request(url,None,headers))
 post=lambda url,data,headers={'Content-Type':'application/json'}:_urlopen(_request(url,data,headers))
 
 def _python2(self):
@@ -30,7 +30,7 @@ def _python2(self):
     string_to_sign_enc = bytes(string_to_sign).encode('utf-8')
     hmac_code          = new(secret_enc, string_to_sign_enc, digestmod=sha).digest()
     sign               = plus(base(hmac_code))
-    return self.url+'&timestamp=%s&sign=%s'%(timestamp,sign)
+    return self.hook+'&timestamp=%s&sign=%s'%(timestamp,sign)
 
 
 def _python3(self):
@@ -47,24 +47,39 @@ def _python3(self):
     string_to_sign_enc = string_to_sign.encode('utf-8')
     hmac_code          = new(secret_enc, string_to_sign_enc, digestmod=sha).digest()
     sign               = plus(base64.b64encode(hmac_code))
-    return self.url+'&timestamp=%s&sign=%s'%(timestamp,sign)
+    return self.hook+'&timestamp=%s&sign=%s'%(timestamp,sign)
 
 
 class Dingbot(object):
+    def __init__(self,webhook,secret=''):
+        if(webhook in _config['names']):
+            index=_config['names'].index(webhook)
+            self.secret=_config['robot'][index]['secret']
+            self.hook  =_config['robot'][index]['webhook']
+        else:
+            self.hook  =webhook
+            self.secret=secret
 
-    def __init__(self,name):
-        '初始化'
-        self.name=name
-        self.url=_config[name]['webhook']
-        self.secret=_config[name]['secret']
         if  (version==2):
-            self.urls=_python2
+            self.urls=lambda:(_python2(self) if(self.secret)else self.hook)
         elif(version==3):
-            self.urls=_python3
+            self.urls=lambda:(_python3(self) if(self.secret)else self.hook)
+
+    def save(self,name):
+        if(name not in _config['names']):
+            _config['names'].append(name)
+            _config['robot'].append({'name':name,'secret':self.secret,'webhook':self.hook})
+        else:
+            index=_config['names'].index(name)
+            _config['robot'][index]['secret'] =self.secret
+            _config['robot'][index]['webhook']=self.hook
+        fout=open('config.json','w')
+        json.dump(_config,fout)
+        fout.close()
 
     def send(self,msg):
         '发送消息'
-        recode=post(self.urls(self),data=json(msg).encode("utf-8"))
+        recode=post(self.urls(),data=json.dumps(msg).encode("utf-8"))
         return eval(recode.read())
 
     def text(self,text,at=[]):
@@ -163,12 +178,9 @@ class Dingbot(object):
         return self.send(msg)
 
 try:
-    with open('config.json','r') as _fin:
-        _config=eval(_fin.read())
+    _fin=open('config.json','r')
 except IOError:
-    with open('config.json','w') as _fout:
-        _fout.write('{}')
-    _config={}
-
-for _ in _config.keys():
-    exec('%s=Dingbot("%s")'%(_,_))
+    _config={"names":[],"robot":[]}
+else:
+    _config=eval(_fin.read())
+    _fin.close()
