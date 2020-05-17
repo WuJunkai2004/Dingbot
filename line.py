@@ -2,29 +2,32 @@
 
 from os import system as call
 
-import share
+import dingbot
 import sys
 
 help=u'''钉钉机器人的命令行接口
 
-Dingbot [string]
-Dingbot [/N robot] -t text [-a]
-Dingbot [/N robot] [-u website_url] [-p image_url]
-Dingbot [/New new_robot]
-Dingbot [/?]|[/H]
+dingbot [string]
+dingbot -del [robot|/a]
+dingbot -help
+dingbot -list
+dingbot [-n robot]
+dingbot [-n robot] -url urls
+dingbot [-n robot] -pic pics
+dingbot [-n robot] -webhook webhook_url [-secret secret]
 
 发送模式
-  /A /ALL  @所有人，仅在-text同时使用
-  /N /NAME 指定发送消息的机器人的名字
-  /P /PIC  分享网页图片
-  /T /TEXT 发送文本信息
-  /U /URL  分享网络连接
+  /N /NAME 指定所操作的机器人
+  /P /PIC  分享图片
+  /T /TEXT 发送文本，可与/PIC连用
+  /U /URL  分享链接
 
 管理模式
+  /A /ALL  仅可与/TEXT或/DEL连用
   /D /DEL  删除机器人
   /H /HELP 获取帮助
-  /L /LIST 查看机器人列表
-     /NEW  新建.更改机器人
+  /L /LIST 机器人名单
+     /WEBHOOK 新建机器人,可指定名称和密匙
 
 更多帮助,请访问 https://github.com/WuJunkai2004/Dingbot'''
 
@@ -73,19 +76,7 @@ for i in range(len(attr)):
         if  (code in ('a','all')):      #@all
             argv['at']=all
         elif(code in ('d','del')):      #删除机器人
-            if(attr[i+1] in config['names']):
-                index=config['names'].index(attr[i+1])
-                del config['names'][index]
-                del config['robot'][index]
-                fout=open('config.json','w')
-                share.json.dump(config,fout)
-                fout.close()
-                recode['errcode']=200
-                recode['errmsg'] ='delete dingbot %s successfully'%(attr[i+1])
-            else:
-                recode['errmsg'] ='can not find the robot %s'%(attr[i+1])
-            print(recode)
-            sys.exit()
+            argv['del']=attr[i+1]
         elif(code in ('h','?','help')): #帮助
             print(help)
             sys.exit()
@@ -110,7 +101,7 @@ for i in range(len(attr)):
             recode['errmsg']='%s is not an option'%(code)
 
                   #检查可用与否
-if(argv['name']=='robot' and not config['names']):
+if(not argv['name'] and not config['names']):
     recode['errmsg']='you have not had any robot now'
     print(recode)
     sys.exit()
@@ -119,10 +110,10 @@ if(argv['name']=='robot' and not config['names']):
 if(not argv['name']):
     argv['name']=config['names'][0]
 if(argv['name'] in config['names']):
-    robot=share.DingbotPlus(argv['name'])
+    robot=dingbot.DingbotPlus(argv['name'])
 else:
     if('hook' in argv.keys()):
-        robot=share.DingbotPlus(argv['hook'],argv['scrt'])
+        robot=dingbot.DingbotPlus(argv['hook'],argv['scrt'])
         robot.save(argv['name'])
         recode['errcode']=200
         recode['errmsg'] ='load robot %s successfully'%(argv['name'])
@@ -142,5 +133,21 @@ elif('url' in argv.keys()):
     recode=robot.share(argv['url'])
 elif('pic' in argv.keys()):
     recode=robot.markdown(u'图片','![](%s)'%(argv['pic']),at)
+elif('del' in argv.keys()):
+    if(argv['at']==all):
+        config={"names":[],"robot":[]}
+        recode['errcode']=200
+        recode['errmsg'] ='delete all of dingbots successfully'
+    elif(attr[i+1] in config['names']):
+        index=config['names'].index(attr[i+1])
+        del config['names'][index]
+        del config['robot'][index]
+        recode['errcode']=200
+        recode['errmsg'] ='delete dingbot %s successfully'%(attr[i+1])
+    else:
+        recode['errmsg'] ='can not find the robot %s'%(attr[i+1])
+    fout=open('config.json','w')
+    fout.write(dingbot.json(config))
+    fout.close()
 
 print(recode)

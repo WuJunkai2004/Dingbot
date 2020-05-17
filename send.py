@@ -11,7 +11,8 @@ except ImportError:
     from urllib2.request import Request as _request
     version=3
 
-import json
+from json import dumps as json
+from json import loads as jsoff
 
 get =lambda url,     headers={'User-Agent':'Mozilla/5.0'}       :_urlopen(_request(url,None,headers))
 post=lambda url,data,headers={'Content-Type':'application/json'}:_urlopen(_request(url,data,headers))
@@ -74,12 +75,12 @@ class Dingbot(object):
             _config['robot'][index]['secret'] =self.secret
             _config['robot'][index]['webhook']=self.hook
         fout=open('config.json','w')
-        json.dump(_config,fout)
+        fout.write(json(_config))
         fout.close()
 
     def send(self,msg):
         '发送消息'
-        recode=post(self.urls(),data=json.dumps(msg).encode("utf-8"))
+        recode=post(self.urls(),data=json(msg).encode("utf-8"))
         return eval(recode.read())
 
     def text(self,text,at=[]):
