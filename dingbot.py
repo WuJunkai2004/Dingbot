@@ -46,7 +46,7 @@ class DingbotPlus(Dingbot):
             titles.append((i['title']))
         return robot.feed(zip(titles,urls,images))
 
-    def picture(self,path=r'D:\用户目录\Pictures\wall.jpg'):
+    def picture(self,path=r'D:\Pictures\wall.jpg'):
         image=open(path,'rb')
         post()
         pass
