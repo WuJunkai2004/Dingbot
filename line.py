@@ -7,27 +7,29 @@ import sys
 
 help=u'''钉钉机器人的命令行接口
 
+语法:
 dingbot [string]
 dingbot -del [robot|/a]
 dingbot -help
 dingbot -list
 dingbot [-n robot]
+dingbot [-n robot] -hook webhook [-key secret]
 dingbot [-n robot] -url urls
 dingbot [-n robot] -pic pics
-dingbot [-n robot] -webhook webhook_url [-secret secret]
 
-发送模式
+发送模式:
   /N /NAME 指定所操作的机器人
   /P /PIC  分享图片
   /T /TEXT 发送文本，可与/PIC连用
-  /U /URL  分享链接
+  /U /URL  分享链接，可与/PIC连用
 
-管理模式
-  /A /ALL  仅可与/TEXT或/DEL连用
+管理模式:
+  /A /ALL  @所有人或删除所有机器人，仅可与/TEXT或/DEL连用
   /D /DEL  删除机器人
   /H /HELP 获取帮助
+     /HOOK 新建机器人，可指定名称和密匙。若指定名称，则保存此机器人的设置
+  /K /KEY  指定密匙
   /L /LIST 机器人名单
-     /WEBHOOK 新建机器人,可指定名称和密匙
 
 更多帮助,请访问 https://github.com/WuJunkai2004/Dingbot'''
 
@@ -71,15 +73,22 @@ else:
 
                   #遍历命令
 for i in range(len(attr)):
-    if(attr[i][0] in ('/','-')):
+    if(attr[i][0] in (r'/','-')):
         code=attr[i].lower()[1:]
+        print code
         if  (code in ('a','all')):      #@all
             argv['at']=all
         elif(code in ('d','del')):      #删除机器人
             argv['del']=attr[i+1]
-        elif(code in ('h','?','help')): #帮助
+        elif(code in ('h','help','?')): #帮助
             print(help)
             sys.exit()
+        elif(code ==      'hook'):      #配置机器人
+            argv['hook']=attr[i+1]
+            if('key' not in argv.keys()):
+                argv['key']=''
+        elif(code in ('k','key')):       #获取密匙
+            argv['key']=attr[i+1]
         elif(code in ('l','list')):     #列表机器人
             print('\n'.join(config['names']))
             sys.exit()
@@ -87,44 +96,39 @@ for i in range(len(attr)):
             argv['name']=attr[i+1]
         elif(code in ('p','pic')):      #发送带图片的消息
             argv['pic']=attr[i+1]
-        elif(code ==      'secret'):    #获取密匙
-            argv['scrt']=attr[i+1]
         elif(code in ('t','text')):     #发送文本消息
             argv['text']=attr[i+1]
         elif(code in ('u','url')):      #发送链接
             argv['url']=attr[i+1]
-        elif(code ==      'webhook'):   #配置机器人
-            argv['hook']=attr[i+1]
-            if('secret' not in argv.keys()):
-                argv['scrt']=''
         else:
             recode['errmsg']='%s is not an option'%(code)
 
                   #检查可用与否
-if(not argv['name'] and not config['names']):
-    recode['errmsg']='you have not had any robot now'
+if(not argv['name'] and not config['names'] and not argv['hook']):
+    recode['errmsg']='you are not having any dingbot now'
     print(recode)
     sys.exit()
 
                   #配置机器人
-if(not argv['name']):
-    argv['name']=config['names'][0]
-if(argv['name'] in config['names']):
-    robot=dingbot.DingbotPlus(argv['name'])
+if  (not argv['name']):
+    if  ('hook' in argv.keys()):
+        robot=dingbot.DingPlus(argv['hook'],argv['key'])
+    else:
+        robot=dingbot.DingPlus(config['names'][0])
 else:
-    if('hook' in argv.keys()):
-        robot=dingbot.DingbotPlus(argv['hook'],argv['scrt'])
+    if  ('hook' in argv.keys()):
+        robot=dingbot.DingPlus(argv['hook'],argv['key'])
         robot.save(argv['name'])
         recode['errcode']=200
         recode['errmsg'] ='load robot %s successfully'%(argv['name'])
     else:
-        recode['errmsg'] ='robot %s does not exist'%(argv['name'])
-        print argv['name']
+        robot=dingbot.DingPlus(argv['names'])
 
 if(len(attr)==1): #快捷发送
     recode=robot.share(attr[0].decode('gbk'))
 
                   #分析命令
+##################下周再改
 if  ('text' in argv.keys()):
     recode=robot.text(argv['text'],argv['at'])
 elif('url' in argv.keys() and 'pic' in argv.keys()):
@@ -132,7 +136,7 @@ elif('url' in argv.keys() and 'pic' in argv.keys()):
 elif('url' in argv.keys()):
     recode=robot.share(argv['url'])
 elif('pic' in argv.keys()):
-    recode=robot.markdown(u'图片','![](%s)'%(argv['pic']),at)
+    recode=robot.markdown(u'图片','![](%s)'%(argv['pic']),argv['at'])
 elif('del' in argv.keys()):
     if(argv['at']==all):
         config={"names":[],"robot":[]}
