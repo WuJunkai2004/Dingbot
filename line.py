@@ -1,11 +1,10 @@
 # coding=utf-8
 
 from os import system as call
-
-import dingbot
 import sys
 
 help=u'''钉钉机器人的命令行接口
+支持部分cmd语法
 
 语法:
 dingbot [string]
@@ -27,8 +26,8 @@ dingbot [-n robot] -pic pics
   /A /ALL  @所有人或删除所有机器人，仅可与/TEXT或/DEL连用
   /D /DEL  删除机器人
   /H /HELP 获取帮助
-     /HOOK 新建机器人，可指定名称和密匙。若指定名称，则保存此机器人的设置
-  /K /KEY  指定密匙
+     /HOOK 构建机器人，可指定名称和密钥。若指定名称，则保存此机器人的设置
+  /K /KEY  指定密钥
   /L /LIST 机器人名单
 
 更多帮助,请访问 https://github.com/WuJunkai2004/Dingbot'''
@@ -40,12 +39,13 @@ echo more help please view https://github.com/WuJunkai2004/Dingbot
     set "cmd="
     set /P cmd=^>^>^>
     if "%cmd%"=="" goto:main
-    if /I "%cmd:~0,7%"=="Dingbot" line.py%cmd:~7%
+    if /I "%cmd:~0,7%"=="Dingbot" (line.py%cmd:~7%) else (%cmd%)
 goto:main'''
 
 attr=sys.argv[1:] #外部命令
 argv={            #内部命令
     'name':'',
+    'use':'dingbot',
     'at':[]
     }
 recode={          #状态码
@@ -75,7 +75,6 @@ else:
 for i in range(len(attr)):
     if(attr[i][0] in (r'/','-')):
         code=attr[i].lower()[1:]
-        print code
         if  (code in ('a','all')):      #@all
             argv['at']=all
         elif(code in ('d','del')):      #删除机器人
@@ -100,6 +99,8 @@ for i in range(len(attr)):
             argv['text']=attr[i+1]
         elif(code in ('u','url')):      #发送链接
             argv['url']=attr[i+1]
+        elif(code ==      'use'):
+            argv['use']=attr[i+1]
         else:
             recode['errmsg']='%s is not an option'%(code)
 
@@ -109,12 +110,15 @@ if(not argv['name'] and not config['names'] and not argv['hook']):
     print(recode)
     sys.exit()
 
+sys.path.append('supports')
+exec('from %s import DingPlus'%(argv['use']))
+
                   #配置机器人
 if  (not argv['name']):
     if  ('hook' in argv.keys()):
-        robot=dingbot.DingPlus(argv['hook'],argv['key'])
+        robot=DingPlus(argv['hook'],argv['key'])
     else:
-        robot=dingbot.DingPlus(config['names'][0])
+        robot=DingPlus(config['names'][0])
 else:
     if  ('hook' in argv.keys()):
         robot=dingbot.DingPlus(argv['hook'],argv['key'])
@@ -128,16 +132,15 @@ if(len(attr)==1): #快捷发送
     recode=robot.share(attr[0].decode('gbk'))
 
                   #分析命令
-##################下周再改
 if  ('text' in argv.keys()):
     recode=robot.text(argv['text'],argv['at'])
-elif('url' in argv.keys() and 'pic' in argv.keys()):
-    recode=robot.push(u'链接','![](%s)'%(argv['pic']),('查看原文',argv['url']))
-elif('url' in argv.keys()):
+elif('url'  in argv.keys() and 'pic' in argv.keys()):
+    recode=robot.card.independent(u'链接','![](%s)'%(argv['pic']),argv['url'])
+elif('url'  in argv.keys()):
     recode=robot.share(argv['url'])
-elif('pic' in argv.keys()):
+elif('pic'  in argv.keys()):
     recode=robot.markdown(u'图片','![](%s)'%(argv['pic']),argv['at'])
-elif('del' in argv.keys()):
+elif('del'  in argv.keys()):
     if(argv['at']==all):
         config={"names":[],"robot":[]}
         recode['errcode']=200
