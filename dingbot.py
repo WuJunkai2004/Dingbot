@@ -4,11 +4,40 @@
 try:
     from urllib2 import urlopen as _urlopen
     from urllib2 import Request as _request
-    version=2
+
+    def _urls(self):
+        ## python2 的加密算法
+        from urllib import quote_plus as plus
+        from base64 import b64encode as base
+        from hashlib import sha256 as sha
+        from time import time
+        from hmac import new
+        timestamp          = long(round(time() * 1000))
+        secret_enc         = bytes(self._key).encode('utf-8')
+        string_to_sign     = '{}\n{}'.format(timestamp, self._key)
+        string_to_sign_enc = bytes(string_to_sign).encode('utf-8')
+        hmac_code          = new(secret_enc, string_to_sign_enc, digestmod=sha).digest()
+        sign               = plus(base(hmac_code))
+        return '%s&timestamp=%s&sign=%s'%(self._web,timestamp,sign)
+
 except ImportError:
     from urllib2.request import urlopen as _urlopen
     from urllib2.request import Request as _request
-    version=3
+
+    def _urls(self):
+        ## python3 的加密算法
+        from urllib.parse import quote_plus as plus
+        from base64  import b64encode as base
+        from hashlib import sha256 as sha
+        from time import time
+        from hmac import new
+        timestamp          = str(round(time.time() * 1000))
+        secret_enc         = secret.encode('utf-8')
+        string_to_sign     = '{}\n{}'.format(timestamp, secret)
+        string_to_sign_enc = string_to_sign.encode('utf-8')
+        hmac_code          = new(secret_enc, string_to_sign_enc, digestmod=sha).digest()
+        sign               = plus(base64.b64encode(hmac_code))
+        return '%s&timestamp=%s&sign=%s'%(self._web,timestamp,sign)
 
 from re import compile as re
 from json import dumps as json
@@ -17,67 +46,55 @@ from json import loads as jsoff
 get =lambda url,     headers={'User-Agent':'Mozilla/5.0'}       :_urlopen(_request(url,None,headers))
 post=lambda url,data,headers={'Content-Type':'application/json'}:_urlopen(_request(url,data,headers))
 
-try:
-    _fin=open('config.json','r')
-except IOError:
-    _config={"names":[],"robot":[]}
-else:
-    _config=eval(_fin.read())
-    _fin.close()
 
+def configure(file,default={}):
+    try:
+        fin=open(file,'r')
+    except IOError:
+        return default
+    else:
+        config=eval(fin.read())
+        fin.close()
+        return config
 
-def _python2(self):
-    ## python2 的加密算法
-    from urllib import quote_plus as plus
-    from base64 import b64encode as base
-    from hashlib import sha256 as sha
-    from time import time
-    from hmac import new
-
-    timestamp          = long(round(time() * 1000))
-    secret_enc         = bytes(self._key).encode('utf-8')
-    string_to_sign     = '{}\n{}'.format(timestamp, self._key)
-    string_to_sign_enc = bytes(string_to_sign).encode('utf-8')
-    hmac_code          = new(secret_enc, string_to_sign_enc, digestmod=sha).digest()
-    sign               = plus(base(hmac_code))
-    return '%s&timestamp=%s&sign=%s'%(self._web,timestamp,sign)
-
-
-def _python3(self):
-    ## python3 的加密算法
-    from urllib.parse import quote_plus as plus
-    from base64  import b64encode as base
-    from hashlib import sha256 as sha
-    from time import time
-    from hmac import new
-
-    timestamp          = str(round(time.time() * 1000))
-    secret_enc         = secret.encode('utf-8')
-    string_to_sign     = '{}\n{}'.format(timestamp, secret)
-    string_to_sign_enc = string_to_sign.encode('utf-8')
-    hmac_code          = new(secret_enc, string_to_sign_enc, digestmod=sha).digest()
-    sign               = plus(base64.b64encode(hmac_code))
-    return '%s&timestamp=%s&sign=%s'%(self._web,timestamp,sign)
+_config=configure('config.json',{"names":[],"robot":[]})
 
 
 def update():
-    pass
+    old=configure('update.json',{"common":{}})
+    up=download('update.json')
+    new=eval(up)
+    for i in new['common'].keys():
+        if(i not in old['common'].keys() or new['common'][i]['date']>old['common'][i]['date']):
+            print download(i)
+        else:
+            print("%s is the newest"%(i))
+    fout=open('update.json','w')
+    fout.write(up)
+    fout.close()
 
 
-def download(url):
+def download(path):
+    url='https://github.com/WuJunkai2004/Dingbot/blob/master/%s'%(path)
     try:
         html=get(url).read()
     except:
-        return {'errcode':404,'errmsg':'can not connect the github'}
-    line=re(r'<td id="LC.+').findall(html)
-    code=[''.join(re(r'(?<=>).{0,}?(?=<)').findall(i)) for i in line]
-    text=unescape('\n'.join(code))
-    print text
+        return {'errcode':404,'errmsg':'can not connect Github'}
+    code=re(r'<td id="LC.+').findall(html)
+    code=[''.join(re(r'(?<=>).{0,}?(?=<)').findall(i)) for i in code]
+    code='\n'.join(code)
+    unes={'&lt;':'<','&nbsp;':' ','&gt;':'>','&quot;':'"','&amp;':'&','&#39;':'\''}
+    for i in unes.keys():
+        text=re(i).sub(unes[i],code)
+    fout=open(path,'w')
+    fout.write(code)
+    fout.close()
+    return {'errcode':200,'errmsg':'update %s successfully'%(path)}
 
 
-class _load(object):
+class _info(object):
+    ##提取参数
     def __init__(self,webhook,secret=''):
-        #提取参数
         if(webhook in _config['names']):
             index=_config['names'].index(webhook)
             self._key=_config['robot'][index]['secret']
@@ -85,21 +102,17 @@ class _load(object):
         else:
             self._web=webhook
             self._key=secret
-        #加密方式
-        if  (version==2):
-            self._url=lambda:(_python2(self) if(self._key)else self._web)
-        elif(version==3):
-            self._url=lambda:(_python3(self) if(self._key)else self._web)
+        self._url=lambda:(_urls(self) if(self._key)else self._web)
 
 
-class _Repeater(_load):
+class _Repeater(_info):
     '中继器'
 
 
-class Dingbot(_load):
+class Dingbot(_info):
     '钉钉机器人的主体'
     def __init__(self,webhook,secret=''):
-        _load.__init__(self,webhook,secret)
+        _info.__init__(self,webhook,secret)
         self.card                   =_Repeater(webhook,secret)
         self.card.feed              =self._feed
         self.card.action            =_Repeater(webhook,secret)
