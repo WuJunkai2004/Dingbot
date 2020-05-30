@@ -121,7 +121,7 @@ if  (not argv['name']):
         robot=DingPlus(config['names'][0])
 else:
     if  ('hook' in argv.keys()):
-        robot=dingbot.DingPlus(argv['hook'],argv['key'])
+        robot=DingPlus(argv['hook'],argv['key'])
         robot.save(argv['name'])
         recode['errcode']=200
         recode['errmsg'] ='load robot %s successfully'%(argv['name'])
