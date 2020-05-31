@@ -1,4 +1,5 @@
 # coding=utf-8
+# version=2.10.0
 
 try:
     from urllib2 import urlopen as _urlopen
@@ -82,7 +83,7 @@ def download(path,turn=False):
     code=re(r'<td id="LC.+').findall(html)
     code=[''.join(re(r'(?<=>).{0,}?(?=<)').findall(i)) for i in code]
     code='\n'.join(code)
-    unes={'&lt;':'<','&nbsp;':' ','>':'>','&quot;':'"','&#39;':'\'','&amp;':'&'}
+    unes={'&lt;':'<','&nbsp;':' ','&gt;':'>','&quot;':'"','&#39;':'\'','&amp;':'&'}
     for i in unes.keys():
         code=re(i).sub(unes[i],code)
     if(turn):return code

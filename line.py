@@ -29,6 +29,8 @@ dingbot [-n robot] -pic pics
      /HOOK 构建机器人，可指定名称和密钥。若指定名称，则保存此机器人的设置
   /K /KEY  指定密钥
   /L /LIST 机器人名单
+     /UP   更新代码
+     /USE  使用模块
 
 更多帮助,请访问 https://github.com/WuJunkai2004/Dingbot'''
 
@@ -99,6 +101,8 @@ for i in range(len(attr)):
             argv['text']=attr[i+1]
         elif(code in ('u','url')):      #发送链接
             argv['url']=attr[i+1]
+        elif(ocde ==      'up'):
+            argv['update']=True
         elif(code ==      'use'):
             argv['use']=attr[i+1]
         else:
@@ -156,5 +160,8 @@ elif('del'  in argv.keys()):
     fout=open('config.json','w')
     fout.write(dingbot.json(config))
     fout.close()
+elif('update' in argv.keys()):
+    from dingbot import update
+    update()
 
 print(recode)
