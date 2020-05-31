@@ -1,5 +1,4 @@
 # coding=utf-8
-# version=2.10.0
 
 try:
     from urllib2 import urlopen as _urlopen
@@ -62,11 +61,11 @@ _config=configure('config.json',{"names":[],"robot":[]})
 
 def update():
     old=configure('update.json',{"common":{}})
-    up=download('update.json')
+    up=download('update.json',True)
     new=eval(up)
     for i in new['common'].keys():
         if(i not in old['common'].keys() or new['common'][i]['date']>old['common'][i]['date']):
-            print download(i)
+            print(download(i))
         else:
             print("%s is the newest"%(i))
     fout=open('update.json','w')
@@ -74,7 +73,7 @@ def update():
     fout.close()
 
 
-def download(path):
+def download(path,turn=False):
     url='https://github.com/WuJunkai2004/Dingbot/blob/master/%s'%(path)
     try:
         html=get(url).read()
@@ -83,9 +82,10 @@ def download(path):
     code=re(r'<td id="LC.+').findall(html)
     code=[''.join(re(r'(?<=>).{0,}?(?=<)').findall(i)) for i in code]
     code='\n'.join(code)
-    unes={'&lt;':'<','&nbsp;':' ','&gt;':'>','&quot;':'"','&amp;':'&','&#39;':'\''}
+    unes={'&lt;':'<','&nbsp;':' ','>':'>','&quot;':'"','&#39;':'\'','&amp;':'&'}
     for i in unes.keys():
-        text=re(i).sub(unes[i],code)
+        code=re(i).sub(unes[i],code)
+    if(turn):return code
     fout=open(path,'w')
     fout.write(code)
     fout.close()
@@ -102,7 +102,7 @@ class _info(object):
         else:
             self._web=webhook
             self._key=secret
-        self._url=lambda:(_urls(self) if(self._key)else self._web)
+        self._url=lambda:(_urls(self)) if(self._key)else (self._web)
 
 
 class _Repeater(_info):
@@ -227,18 +227,24 @@ class Dingbot(_info):
         
     def send(self,msg):
         '发送消息'
-        recode=post(self._url(),data=json(msg).encode("utf-8"))
+        recode=post(self._url(),json(msg).encode("utf-8"))
         return eval(recode.read())
 
 
 class DingPlus(Dingbot):
+    head={'User-Agent':'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Mobile Safari/537.36'}
     def share(self,url):
         try:
-            html=get(url).read()
+            html=get(url,self.head).read()
         except ValueError:
             return self.text(url)
         try:
-            title=re(r'(?<=<title>).+?(?=</title>)').search(html).group()
+            title=re(r'(?<=>).[^>]+?(?=</title>)').search(html).group()
         except AttributeError:
             return self.markdown(u'图片','![](%s)'%(url))
-        print title
+        img=re(r'(?<=").[^"]+?(jpg|jpeg|png)(@.+\.webp)?(?=")').search(html)
+        img=img.group().split('@')[0] if(img)else ''
+        if(img[:2]=='//'):img='http:'+img
+        text=re(r'(?<=>).[^>]+?(?=(</p>|</h[1-6]>|</strong>))').search(html)
+        text=text.group() if(text)else u'查看全文'
+        return self.link(title,text,url,img)
