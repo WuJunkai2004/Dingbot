@@ -1,5 +1,4 @@
 # coding=utf-8
-# version=2.10.0
 
 try:
     from urllib2 import urlopen as _urlopen
@@ -18,16 +17,13 @@ get =lambda url,     headers={'User-Agent':'Mozilla/5.0'}       :_urlopen(_reque
 post=lambda url,data,headers={'Content-Type':'application/json'}:_urlopen(_request(url,data,headers))
 
 def GET_URL():
-    try:
-        from urllib import quote_plus as plus
-    except IOError:
-        from urllib.parse import quote_plus as plus
     from base64  import b64encode as base
     from hashlib import sha256 as sha
     from time import time
     from hmac import new
 
     def python2(self):
+        from urllib import quote_plus as plus
         timestamp          = long(round(time() * 1000))
         secret_enc         = bytes(self._key).encode('utf-8')
         string_to_sign     = '{}\n{}'.format(timestamp, self._key)
@@ -35,8 +31,8 @@ def GET_URL():
         hmac_code          = new(secret_enc, string_to_sign_enc, digestmod=sha).digest()
         sign               = plus(base(hmac_code))
         return '%s&timestamp=%s&sign=%s'%(self._web,timestamp,sign)
-
     def python3(self):
+        from urllib.parse import quote_plus as plus
         timestamp          = str(round(time.time() * 1000))
         secret_enc         = secret.encode('utf-8')
         string_to_sign     = '{}\n{}'.format(timestamp, secret)
@@ -57,7 +53,6 @@ def configure(file,default={}):
         config=eval(fin.read())
         fin.close()
         return config
-
 _config=configure('config.json',{"names":[],"robot":[]})
 
 
@@ -84,9 +79,9 @@ def download(path,turn=False):
     code=re(r'<td id="LC.+').findall(html)
     code=[''.join(re(r'(?<=>).{0,}?(?=<)').findall(i)) for i in code]
     code='\n'.join(code)
-    unes={'&lt;':'<','&nbsp;':' ','>':'>','&quot;':'"','s':'\'','&amp;':'&'}
-    for i in unes.keys():
-        code=re(i).sub(unes[i],code)
+    unes=(('&lt;','<'),('&gt;','>'),('&nbsp;',' '),('%#39;','\''),('&quot;','"'),('&&amp;','&'))
+    for i in unes:
+        code=re(i[0]).sub(i[1],code)
     if(turn):return code
     fout=open(path,'w')
     fout.write(code)
@@ -234,7 +229,7 @@ class Dingbot(_info):
 
 
 class DingPlus(Dingbot):
-    head={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36 Edg/83.0.478.45'}
+    head={'User-Agent':'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N; Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36 Edg/83.0.478.45'}
     def share(self,url):
         try:
             html=get(url,self.head).read()
