@@ -4,14 +4,30 @@
 try:
     from urllib2 import urlopen as _urlopen
     from urllib2 import Request as _request
+except ImportError:
+    from urllib2.request import urlopen as _urlopen
+    from urllib2.request import Request as _request
+else:
+    version=2
 
-    def _urls(self):
-        ## python2 的加密算法
+from re import compile as re
+from json import dumps as json
+from json import loads as jsoff
+
+get =lambda url,     headers={'User-Agent':'Mozilla/5.0'}       :_urlopen(_request(url,None,headers))
+post=lambda url,data,headers={'Content-Type':'application/json'}:_urlopen(_request(url,data,headers))
+
+def GET_URL():
+    try:
         from urllib import quote_plus as plus
-        from base64 import b64encode as base
-        from hashlib import sha256 as sha
-        from time import time
-        from hmac import new
+    except IOError:
+        from urllib.parse import quote_plus as plus
+    from base64  import b64encode as base
+    from hashlib import sha256 as sha
+    from time import time
+    from hmac import new
+
+    def python2(self):
         timestamp          = long(round(time() * 1000))
         secret_enc         = bytes(self._key).encode('utf-8')
         string_to_sign     = '{}\n{}'.format(timestamp, self._key)
@@ -20,17 +36,7 @@ try:
         sign               = plus(base(hmac_code))
         return '%s&timestamp=%s&sign=%s'%(self._web,timestamp,sign)
 
-except ImportError:
-    from urllib2.request import urlopen as _urlopen
-    from urllib2.request import Request as _request
-
-    def _urls(self):
-        ## python3 的加密算法
-        from urllib.parse import quote_plus as plus
-        from base64  import b64encode as base
-        from hashlib import sha256 as sha
-        from time import time
-        from hmac import new
+    def python3(self):
         timestamp          = str(round(time.time() * 1000))
         secret_enc         = secret.encode('utf-8')
         string_to_sign     = '{}\n{}'.format(timestamp, secret)
@@ -39,12 +45,7 @@ except ImportError:
         sign               = plus(base64.b64encode(hmac_code))
         return '%s&timestamp=%s&sign=%s'%(self._web,timestamp,sign)
 
-from re import compile as re
-from json import dumps as json
-from json import loads as jsoff
-
-get =lambda url,     headers={'User-Agent':'Mozilla/5.0'}       :_urlopen(_request(url,None,headers))
-post=lambda url,data,headers={'Content-Type':'application/json'}:_urlopen(_request(url,data,headers))
+    return python2 if(version==2)else python3
 
 
 def configure(file,default={}):
@@ -83,7 +84,7 @@ def download(path,turn=False):
     code=re(r'<td id="LC.+').findall(html)
     code=[''.join(re(r'(?<=>).{0,}?(?=<)').findall(i)) for i in code]
     code='\n'.join(code)
-    unes={'&lt;':'<','&nbsp;':' ','&gt;':'>','&quot;':'"','&#39;':'\'','&amp;':'&'}
+    unes={'&lt;':'<','&nbsp;':' ','>':'>','&quot;':'"','s':'\'','&amp;':'&'}
     for i in unes.keys():
         code=re(i).sub(unes[i],code)
     if(turn):return code
@@ -103,7 +104,7 @@ class _info(object):
         else:
             self._web=webhook
             self._key=secret
-        self._url=lambda:(_urls(self)) if(self._key)else (self._web)
+        self._url=lambda:(GET_URL()(self) if(self._key)else self._web)
 
 
 class _Repeater(_info):
@@ -233,7 +234,7 @@ class Dingbot(_info):
 
 
 class DingPlus(Dingbot):
-    head={'User-Agent':'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Mobile Safari/537.36'}
+    head={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36 Edg/83.0.478.45'}
     def share(self,url):
         try:
             html=get(url,self.head).read()
