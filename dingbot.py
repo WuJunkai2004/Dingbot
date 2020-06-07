@@ -64,7 +64,7 @@ def update():
         if(i not in old['common'].keys() or new['common'][i]['date']>old['common'][i]['date']):
             print(download(i))
         else:
-            print("%s is the newest"%(i))
+            print("%s is the latest"%(i))
     fout=open('update.json','w')
     fout.write(up)
     fout.close()
@@ -79,7 +79,7 @@ def download(path,turn=False):
     code=re(r'<td id="LC.+').findall(html)
     code=[''.join(re(r'(?<=>).{0,}?(?=<)').findall(i)) for i in code]
     code='\n'.join(code)
-    unes=(('&lt;','<'),('&gt;','>'),('&nbsp;',' '),('&#39;','\''),('&quot;','"'),('&&amp;','&'))
+    unes=(('&lt;','<'),('&gt;','>'),('&nbsp;',' '),('&#39;','\''),('&quot;','"'),('&amp;','&'))
     for i in unes:
         code=re(i[0]).sub(i[1],code)
     if(turn):return code
