@@ -79,7 +79,7 @@ def download(path,turn=False):
     code=re(r'<td id="LC.+').findall(html)
     code=[''.join(re(r'(?<=>).{0,}?(?=<)').findall(i)) for i in code]
     code='\n'.join(code)
-    unes=(('&lt;','<'),('&gt;','>'),('&nbsp;',' '),('%#39;','\''),('&quot;','"'),('&&amp;','&'))
+    unes=(('&lt;','<'),('&gt;','>'),('&nbsp;',' '),('&#39;','\''),('&quot;','"'),('&&amp;','&'))
     for i in unes:
         code=re(i[0]).sub(i[1],code)
     if(turn):return code
