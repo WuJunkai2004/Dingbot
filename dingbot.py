@@ -7,7 +7,7 @@ except ImportError:
     from urllib2.request import urlopen as _urlopen
     from urllib2.request import Request as _request
 else:
-    version=2
+    python=2
 
 from re import compile as re
 from json import dumps as json
@@ -41,7 +41,7 @@ def GET_URL():
         sign               = plus(base64.b64encode(hmac_code))
         return '%s&timestamp=%s&sign=%s'%(self._web,timestamp,sign)
 
-    return python2 if(version==2)else python3
+    return python2 if(python==2)else python3
 
 
 def configure(file,default={}):
@@ -72,10 +72,7 @@ def update():
 
 def download(path,turn=False):
     url='https://cdn.jsdelivr.net/gh/WuJunkai2004/Dingbot@master/%s'%(path)
-    try:
-        code=get(url).read()
-    except:
-        return {'errcode':404,'errmsg':'can not connect jsdelivr'}
+    code=get(url).read().replace('\r','')
     if(turn):return code
     fout=open(path,'w')
     fout.write(code)
