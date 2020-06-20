@@ -71,17 +71,11 @@ def update():
 
 
 def download(path,turn=False):
-    url='https://github.com/WuJunkai2004/Dingbot/blob/master/%s'%(path)
+    url='https://cdn.jsdelivr.net/gh/WuJunkai2004/Dingbot@master/%s'%(path)
     try:
-        html=get(url).read()
+        code=get(url).read()
     except:
-        return {'errcode':404,'errmsg':'can not connect Github'}
-    code=re(r'<td id="LC.+').findall(html)
-    code=[''.join(re(r'(?<=>).{0,}?(?=<)').findall(i)) for i in code]
-    code='\n'.join(code)
-    unes=(('&lt;','<'),('&gt;','>'),('&nbsp;',' '),('&#39;','\''),('&quot;','"'),('&amp;','&'))
-    for i in unes:
-        code=re(i[0]).sub(i[1],code)
+        return {'errcode':404,'errmsg':'can not connect jsdelivr'}
     if(turn):return code
     fout=open(path,'w')
     fout.write(code)
