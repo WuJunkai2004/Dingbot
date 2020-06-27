@@ -4,8 +4,8 @@ try:
     from urllib2 import urlopen as _urlopen
     from urllib2 import Request as _request
 except ImportError:
-    from urllib2.request import urlopen as _urlopen
-    from urllib2.request import Request as _request
+    from urllib.request import urlopen as _urlopen
+    from urllib.request import Request as _request
 else:
     python=2
 
@@ -72,7 +72,10 @@ def update():
 
 def download(path,turn=False):
     url='https://cdn.jsdelivr.net/gh/WuJunkai2004/Dingbot@master/%s'%(path)
-    code=get(url).read().replace('\r','')
+    try:
+        code=get(url).read().replace('\r','')
+    except:
+        return {'errcode':404,'errmsg':'can not connect jsdelivr'}
     if(turn):return code
     fout=open(path,'w')
     fout.write(code)
