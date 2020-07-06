@@ -8,15 +8,5 @@
 　　开发者努力让所有人——无论是否接受过编程教育——都可以快速上手，开发了 `line.py` 模块，可用于命令行。
 ### 使用方法
 #### 模块
-　　现在，整个机器人机器人接口仅有一个源文件，即 `dingbot.py` 。它可以对机器人进行最基本的操作。  
-　　这是 `dingbot.py` 的树形结构：
-> dingbot.py  
->> def GET\_URL()  
->> def configure(file,default={})  
->> def update()  
->> def download(path,turn=False)  
-
->> class \_info(object)  
->>> def \_\_init\_\_(self,webhook,secret='')  
-
->> class \_
+　　现在，整个钉钉机器人接口仅有一个源文件，即 `dingbot.py` 。它可以对机器人进行最基本的操作。  
+　　如果您选择导入此程序作为模块，应仅访问 `Dingbot` 与 `DingPlus` 这两个类。否则，将不能保证您的数据的安全性。
