@@ -6,6 +6,7 @@ try:
 except ImportError:
     from urllib.request import urlopen as _urlopen
     from urllib.request import Request as _request
+    python=3
 else:
     python=2
 
@@ -129,7 +130,7 @@ class Dingbot(_info):
         if(at==all):
             every=True
         else:
-            phone=list(map(str,at))
+            phone=[str[i] for i in at]
         msg={
             'msgtype':'text',
             'text'   :{
@@ -162,7 +163,7 @@ class Dingbot(_info):
         if(at==all):
             every=True
         else:
-            phone=list(map(str,at))
+            phone=[str(i) for i in at]
         msg={
             "msgtype":"markdown",
             "markdown":{
@@ -180,7 +181,7 @@ class Dingbot(_info):
         '订阅推送'
         if(len(links)==1 and type(links[0])!=str):
             links=links[0]
-        link=list(map(dict,map(lambda x:zip(('title','messageURL','picURL'),x),links)))
+        link=[dict(i) for i in [zip(('title','messageURL','picURL'),i) for i in links]]
         msg={
             "msgtype":"feedCard",
             "feedCard":{
