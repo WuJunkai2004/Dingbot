@@ -1,242 +1,162 @@
 # coding=utf-8
 
+# * A SDK for group robots of Dingtalk ( copyright )
+# * Wu Junkai wrote by python 3.7.7
+# * version = 3.00.0
+
+__all__ = ['Dingapi','DingManage']
+
 try:
-    from urllib2 import urlopen as _urlopen
-    from urllib2 import Request as _request
+    from urllib2 import urlopen
+    from urllib2 import Request
+    from urllib  import quote_plus
 except ImportError:
-    from urllib.request import urlopen as _urlopen
-    from urllib.request import Request as _request
-    python=3
-else:
-    python=2
+    from urllib.request import urlopen
+    from urllib.request import Request
+    from urllib.parse   import quote_plus
 
-from re import compile as re
-from json import dumps as json
-from json import loads as jsoff
+import base64
+import hashlib
+import hmac
+import json
+import sys
+import time
 
-get =lambda url,     headers={'User-Agent':'Mozilla/5.0'}       :_urlopen(_request(url,None,headers))
-post=lambda url,data,headers={'Content-Type':'application/json'}:_urlopen(_request(url,data,headers))
+def _http_manage(url,data,headers):
+    'Responsible for network access'
+    text=urlopen(request(url,data,headers)).read()
+    if(sys.version_info.major==3):
+        text = text.decode('utf-8')
+    return text
 
-def GET_URL():
-    from base64  import b64encode as base
-    from hashlib import sha256 as sha
-    from time import time
-    from hmac import new
+def _http_get(url,headers):
+    'Inherited from _http_manage and responsible for network get'
+    return _http_manage(url,None,headers)
 
-    def python2(self):
-        from urllib import quote_plus as plus
-        timestamp          = long(round(time() * 1000))
-        secret_enc         = bytes(self._key).encode('utf-8')
-        string_to_sign     = '{}\n{}'.format(timestamp, self._key)
+def _http_post(url,data,headers):
+    'Inherited from _http_manage and responsible for network get'
+    return _http_manage(url,data,headers)
+
+class _configure_manage:
+    'Configuration file read and manage'
+    def __init__(self,path=r'.\config.json'):
+        self.path=path
+        self.load()
+
+    def load(self):
+        try:
+            fin=open(self.path,'r')
+        except IOError:
+            self.data={'names':[],'robot':[]}
+        else:
+            self.data=json.load(fin)
+            fin.close()
+    
+    def save(self):
+        with open(self.path,'w') as fout:
+            json.dump(self.data,fout)
+
+class _dingtalk_robot_signature:
+    'dingtalk robot signature algorithm'
+    def _python_2_signature(self,webhook,secret):
+        timestamp          = long(round(time.time() * 1000))
+        secret_enc         = bytes(secret).encode('utf-8')
+        string_to_sign     = '{}\n{}'.format(timestamp, secret)
         string_to_sign_enc = bytes(string_to_sign).encode('utf-8')
-        hmac_code          = new(secret_enc, string_to_sign_enc, digestmod=sha).digest()
-        sign               = plus(base(hmac_code))
-        return '%s&timestamp=%s&sign=%s'%(self._web,timestamp,sign)
-    def python3(self):
-        from urllib.parse import quote_plus as plus
+        hmac_code          = hmac.new(secret_enc, string_to_sign_enc, digestmod=hashlib.sha256).digest()
+        sign               = quote_plus(base64.b64encode(hmac_code))
+        return '{}&timestamp={}&sign={}'.format(webhook,timestamp,sign)
+
+    def _python_3_signature(self,webhook,secret):
         timestamp          = str(round(time.time() * 1000))
         secret_enc         = secret.encode('utf-8')
         string_to_sign     = '{}\n{}'.format(timestamp, secret)
         string_to_sign_enc = string_to_sign.encode('utf-8')
-        hmac_code          = new(secret_enc, string_to_sign_enc, digestmod=sha).digest()
-        sign               = plus(base64.b64encode(hmac_code))
-        return '%s&timestamp=%s&sign=%s'%(self._web,timestamp,sign)
-
-    return python2 if(python==2)else python3
-
-
-def configure(file,default={}):
-    try:
-        fin=open(file,'r')
-    except IOError:
-        return default
-    else:
-        config=eval(fin.read())
-        fin.close()
-        return config
-_config=configure('config.json',{"names":[],"robot":[]})
-
-
-def update():
-    old=configure('update.json',{"common":{}})
-    up=download('update.json',True)
-    new=eval(up)
-    for i in new['common'].keys():
-        if(i not in old['common'].keys() or new['common'][i]['date']>old['common'][i]['date']):
-            print(download(i))
-        else:
-            print("%s is the latest"%(i))
-    fout=open('update.json','w')
-    fout.write(up)
-    fout.close()
-
-
-def download(path,turn=False):
-    url='https://cdn.jsdelivr.net/gh/WuJunkai2004/Dingbot@master/%s'%(path)
-    try:
-        code=get(url).read().replace('\r','')
-    except:
-        return {'errcode':404,'errmsg':'can not connect jsdelivr'}
-    if(turn):return code
-    fout=open(path,'w')
-    fout.write(code)
-    fout.close()
-    return {'errcode':200,'errmsg':'update %s successfully'%(path)}
-
-
-class _info(object):
-    ##提取参数
-    def __init__(self,webhook,secret=''):
-        if(webhook in _config['names']):
-            index=_config['names'].index(webhook)
-            self._key=_config['robot'][index]['secret']
-            self._web=_config['robot'][index]['webhook']
-        else:
-            self._web=webhook
-            self._key=secret
-        self._url=lambda:(GET_URL()(self) if(self._key)else self._web)
-
-
-class _Repeater(_info):
-    '中继器'
-
-
-class Dingbot(_info):
-    '钉钉机器人的主体'
-    def __init__(self,webhook,secret=''):
-        _info.__init__(self,webhook,secret)
-        self.card                   =_Repeater(webhook,secret)
-        self.card.feed              =self._feed
-        self.card.action            =_Repeater(webhook,secret)
-        self.card.action.overall    =self._overa
-        self.card.action.independent=self._indep
-
-    def save(self,name):
-        if(name not in _config['names']):
-            _config['names'].append(name)
-            _config['robot'].append({'name':name,'secret':self._key,'webhook':self._web})
-        else:
-            index=_config['names'].index(name)
-            _config['robot'][index]['secret'] =self._key
-            _config['robot'][index]['webhook']=self._web
-        fout=open('config.json','w')
-        fout.write(json(_config))
-        fout.close()
-
-    def text(self,text,at=[]):
-        '文本信息'
-        phone=[]
-        every=False
-        if(at==all):
-            every=True
-        else:
-            phone=[str[i] for i in at]
-        msg={
-            'msgtype':'text',
-            'text'   :{
-                "content":text
-                },
-            'at'     :{
-                'atMobiles':phone,
-                'isAtAll'  :every 
-                }
-            }
-        return self.send(msg)
-
-    def link(self,title,text,url,pic=''):
-        '链接'
-        msg={
-            'msgtype':"link",
-            'link'   :{
-                'title':title,
-                'text' :text,
-                'messageUrl':url,
-                'picUrl'    :pic
-                }
-            }
-        return self.send(msg)
-
-    def markdown(self,title,markdown,at=[]):
-        'markdown'
-        phone=[]
-        every=False
-        if(at==all):
-            every=True
-        else:
-            phone=[str(i) for i in at]
-        msg={
-            "msgtype":"markdown",
-            "markdown":{
-                "title":title,
-                "text" :markdown
-                },
-            "at"      :{
-                "atMobiles":phone,
-                "isAtAll"  :every
-                }
-            }
-        return self.send(msg)
-
-    def _feed(self,*links):
-        '订阅推送'
-        if(len(links)==1 and type(links[0])!=str):
-            links=links[0]
-        link=[dict(i) for i in [zip(('title','messageURL','picURL'),i) for i in links]]
-        msg={
-            "msgtype":"feedCard",
-            "feedCard":{
-                'links':link
-                }
-            }
-        return self.send(msg)
-
-    def _indep(self,title,markdown,url,show=u'阅读全文'):
-        msg={
-            'msgtype':'actionCard',
-            'actionCard':{
-                'title':title,
-                'text' :markdown,
-                'singleTitle'   :show,
-                'singleURL'     :url
-                }
-            }
-        return self.send(msg)
-
-    def _overa(self,title,markdown,button):
-        if(type(button[0])==str):
-            button=[button]
-        btns=[{'title':i[0],'actionURL':i[1]} for i in button]
-        msg={
-            "msgtype": "actionCard",
-            "actionCard": {
-                "title": title,
-                "text" : markdown,
-                "btns" : btns,
-                'btnOrientation':'0',
-                }
-            }
-        return self.send(msg)
+        hmac_code          = hmac.new(secret_enc, string_to_sign_enc, digestmod=hashlib.sha256).digest()
+        sign               = quote_plus(base64.b64encode(hmac_code))
+        return '{}&timestamp={}&sign={}'.format(webhook,timestamp,sign)
         
-    def send(self,msg):
-        '发送消息'
-        recode=post(self._url(),json(msg).encode("utf-8"))
-        return eval(recode.read())
+class _dingtalk_robot_manage(_dingtalk_robot_signature):
+    'dingtalk robot manage , inherited from _dingbot_robot_signature'
+    def __init__(self,mothed=['Signature']):
+        self.mothed  = mothed
+        self.conf    = _configure_manage()
+        self.is_login = False
 
+    def login(self,name=None,webhook=None,secret=None):
+        self.is_login = True
+        if(name in self.conf.data[u'names']):
+            index=self.conf.data[u'names'].index(name)
+            self.name    = self.conf.data[u'robot'][index][u'name']
+            self.webhook = self.conf.data[u'robot'][index][u'webhook']
+            self.secret  = self.conf.data[u'robot'][index][u'secret']
+        else:
+            self.name    = name
+            self.webhook = webhook
+            self.secret  = secret
 
-class DingPlus(Dingbot):
-    head={'User-Agent':'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N; Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36 Edg/83.0.478.45'}
-    def share(self,url):
-        try:
-            html=get(url,self.head).read()
-        except ValueError:
-            return self.text(url)
-        try:
-            title=re(r'(?<=>).[^>]+?(?=</title>)').search(html).group()
-        except AttributeError:
-            return self.markdown(u'图片','![](%s)'%(url))
-        img=re(r'(?<=").[^"]+?(jpg|jpeg|png)(@.+\.webp)?(?=")').search(html)
-        img=img.group().split('@')[0] if(img)else ''
-        if(img[:2]=='//'):img='http:'+img
-        text=re(r'(?<=>).[^>]+?(?=(</p>|</h[1-6]>|</strong>))').search(html)
-        text=text.group() if(text)else u'查看全文'
-        return self.link(title,text,url,img)
+    def remember(self):
+        data={u'name':self.name,u'webhook':self.webhook,u'secret':self.secret}
+        if(self.name in self.conf.data[u'names']):
+            index=self.conf.data[u'names'].index(self.name)
+            self.conf.data[u'robot'][index]=data
+        else:
+            self.conf.data[u'robot'].append(data)
+        self.conf.save()
+
+    def delete(self):
+        if(self.name not in self.conf.data[u'names']):
+            raise RuntimeError('{} is not a robot\'s name'.format(self.name))
+        index=self.conf.data[u'names'].index(self.name)
+        del self.conf.data[u'names'][index]
+        del self.conf.data[u'robot'][index]
+        self.conf.save()
+        _dingtalk_robot_manage.__init__(self,None)
+
+    def url(self):
+        if('Signature' in self.mothed):
+            signature_name   = '_python_{}_signature'.format(sys.version_info.major)
+            signature_mothed = getattr(self,signature_name)
+            return signature_mothed(self.webhook,self.secret)
+        return self.webhook
+
+    def __getattr__(self,text):
+        if(text=='api' and self.is_login):
+            return _dingtalk_robot_api(self)
+        if(not self.is_login):
+            raise RuntimeError("The robot must be logged in at first")
+        raise AttributeError("'DingManage' object has no attribute '{}'".format(text))
+
+    def __dir__(self):
+        return ['api','delete','login','remember']
+
+class DingManage(_dingtalk_robot_manage):
+    ...
+
+class _dingtalk_robot_api:
+    'dingtalk robot api for controlling'
+    def __init__(self,robot):
+        self.__robot__= robot
+        self.__api__  = None
+        self.__at__   = None
+
+    def __getattr__(self,mothed):
+        self.__api__ = mothed
+        return self.__post__
+
+    def __post__(self,**kwattr):
+        url     = self.__robot__.url()
+        headers = {'Content-Type': 'application/json'}
+        data    = json.dumps({'at':self.__at__,'msgtype':self.__api__,self.__api__:kwattr}).encode("utf-8")
+        post    = _http_post( url, data, headers )
+        self.__init__(self.__robot__)
+        return eval(post)
+
+    def at(self,**kwattr):
+        self.__at__ = kwattr
+
+    def __dir__(self):
+        return ['ActionCard','FeedCard','at','link','markdown','text']
+
+class Dingapi(_dingtalk_robot_api):
+    ...
