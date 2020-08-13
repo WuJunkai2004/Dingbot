@@ -1,8 +1,8 @@
 # coding=utf-8
 
 # * A SDK for group robots of Dingtalk ( copyright )
-# * Wu Junkai wrote by python 3.7.7
-# * version = 3.00.0
+# * Wu Junkai wrote by python 3.7.7 , run in python 2.7.14 and python 3.8.1
+# * version = 3.10.0
 
 __all__ = ['Dingapi','DingManage']
 
@@ -24,7 +24,7 @@ import time
 
 def _http_manage(url,data,headers):
     'Responsible for network access'
-    text=urlopen(request(url,data,headers)).read()
+    text=urlopen(Request(url,data,headers)).read()
     if(sys.version_info.major==3):
         text = text.decode('utf-8')
     return text
@@ -51,7 +51,7 @@ class _configure_manage:
         else:
             self.data=json.load(fin)
             fin.close()
-    
+
     def save(self):
         with open(self.path,'w') as fout:
             json.dump(self.data,fout)
@@ -75,25 +75,27 @@ class _dingtalk_robot_signature:
         hmac_code          = hmac.new(secret_enc, string_to_sign_enc, digestmod=hashlib.sha256).digest()
         sign               = quote_plus(base64.b64encode(hmac_code))
         return '{}&timestamp={}&sign={}'.format(webhook,timestamp,sign)
-        
+
 class _dingtalk_robot_manage(_dingtalk_robot_signature):
     'dingtalk robot manage , inherited from _dingbot_robot_signature'
-    def __init__(self,mothed=['Signature']):
-        self.mothed  = mothed
-        self.conf    = _configure_manage()
-        self.is_login = False
+    def __init__(self,name=None):
+        self.conf      = _configure_manage()
+        self.name      = name
+        self.signature = True
+        self.is_login  = False
+        if(self.name in self.conf.data[u'names']):
+            self.login()
 
-    def login(self,name=None,webhook=None,secret=None):
+    def login(self,webhook=None,secret=None):
         self.is_login = True
-        if(name in self.conf.data[u'names']):
-            index=self.conf.data[u'names'].index(name)
-            self.name    = self.conf.data[u'robot'][index][u'name']
+        self.webhook  = webhook
+        self.secret   = secret
+        if(self.name in self.conf.data[u'names']):
+            index=self.conf.data[u'names'].index(self.name)
             self.webhook = self.conf.data[u'robot'][index][u'webhook']
             self.secret  = self.conf.data[u'robot'][index][u'secret']
-        else:
-            self.name    = name
-            self.webhook = webhook
-            self.secret  = secret
+        elif(not webhook):
+            raise AttributeError('The robot need the webhook')
 
     def remember(self):
         data={u'name':self.name,u'webhook':self.webhook,u'secret':self.secret}
@@ -102,6 +104,7 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
             self.conf.data[u'robot'][index]=data
         else:
             self.conf.data[u'robot'].append(data)
+            self.conf.data[u'names'].append(self.name)
         self.conf.save()
 
     def delete(self):
@@ -114,7 +117,7 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
         _dingtalk_robot_manage.__init__(self,None)
 
     def url(self):
-        if('Signature' in self.mothed):
+        if(self.signature):
             signature_name   = '_python_{}_signature'.format(sys.version_info.major)
             signature_mothed = getattr(self,signature_name)
             return signature_mothed(self.webhook,self.secret)
@@ -131,7 +134,7 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
         return ['api','delete','login','remember']
 
 class DingManage(_dingtalk_robot_manage):
-    ...
+    pass
 
 class _dingtalk_robot_api:
     'dingtalk robot api for controlling'
@@ -159,4 +162,4 @@ class _dingtalk_robot_api:
         return ['ActionCard','FeedCard','at','link','markdown','text']
 
 class Dingapi(_dingtalk_robot_api):
-    ...
+    pass
