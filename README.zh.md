@@ -33,7 +33,7 @@ revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 # 检查返回值
 print(revalue)
 ```
-　　但是上述写法是不推荐的。这里还是推荐安全设置使用 加签。加签可以适应大部分应用场景，同时保证机器人的安全性。
+　　但是上述写法是不推荐的。这里还是推荐安全设置使用 加签。加签可以适应大部分应用场景，同时保证机器人的安全性。  
 　　dingbot默认机器人的安全设置为加签。
 ```python
 import dingbot
@@ -61,7 +61,7 @@ webhook='https://oapi.dingtalk.com/robot/send?access_token=XXXXXX'
 secrec ='oneoan69fe149fa4849das4dfda1df981d1fa51d8'
 
 
-robot=dingbot.DingManage(’bluebird')    # 名称在此处传入
+robot=dingbot.DingManage('bluebird')    # 名称在此处传入
 robot.login(webhook,secret)
 robot.remember()
 ```
@@ -72,7 +72,7 @@ robot.remember()
 '''
 import dingbot
 
-robot=dingbot.DingManage(’bluebird')
+robot=dingbot.DingManage('bluebird')
 
 robot.api.text(content=u'我就是我, 是不一样的烟火')
 ```
