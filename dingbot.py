@@ -2,9 +2,9 @@
 
 # * A SDK for group robots of Dingtalk ( copyright )
 # * Wu Junkai wrote by python 3.7.7 , run in python 2.7.14 and python 3.8.1
-# * version = 3.10.0
 
-__all__ = ['Dingapi','DingManage']
+__version__ = '3.15.0'
+__all__ = ['Card','Dingapi','DingManage']
 
 try:
     from urllib2 import urlopen
@@ -36,6 +36,10 @@ def _http_get(url,headers):
 def _http_post(url,data,headers):
     'Inherited from _http_manage and responsible for network get'
     return _http_manage(url,data,headers)
+
+def Card(**kwattr):
+    'Changes values into dist'
+    return kwattr
 
 class _configure_manage:
     'Configuration file read and manage'
@@ -131,7 +135,7 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
         raise AttributeError("'DingManage' object has no attribute '{}'".format(text))
 
     def __dir__(self):
-        return ['api','delete','login','remember']
+        return ['api','conf','delete','login','name','remember','signature','webhook']
 
 class DingManage(_dingtalk_robot_manage):
     pass
