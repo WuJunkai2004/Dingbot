@@ -48,7 +48,50 @@ robot.login(webhook,secret)
 revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
 ```
-　　api的调用格式将在下面给出。
+### api的调用方式
+　　钉钉机器人提供了5种不同的信息类型，分别为text,link,markdown,ActionCard,FeedCard。  
+　　若无特殊说明，字符串的编码均为 UTF-8 。参数对大小写敏感。
+#### text
+```python
+# demo
+robot.api.text(content=u'我就是我, 是不一样的烟火')
+```
+参数 | 类型 | 必选 | 说明
+--- | --- | --- | --- 
+content | str | YES | 消息内容
+
+#### link
+```python
+# demo
+robot.api.link(text=u"这个即将发布的新版本，创始人xx称它为红树林。而在此之前，每当面临重大升级，产品经理们都会取一个应景的代号，这一次，为什么是红树林",
+               title=u"时代的火车向前开",
+               messageUrl="https://www.dingtalk.com/",
+               picUrl='https://gw.alicdn.com/tfs/TB1aNrLGlr0gK0jSZFnXXbRRXXa-202-76.png')
+```
+参数 | 类型 | 必选 | 说明
+--- | --- | --- | ---
+title | str | YES | 消息标题
+text | str | YES | 消息内容。如果太长只会部分展示
+messageURL | str | YES | 点击消息跳转的URL
+picURL | str | NO | 图片URL
+
+### 使用@
+　　dingbot 使用`@`的方法与钉钉开发文档内的内容完全相同。调用 at() 方法，指定被@指定对象。  
+　　每次发送完信息，at的数据就会重置，需要再次调用at()方法。  
+　　如果在消息里没有指定@的位置，会默认加到消息末尾。  
+```python
+# demo
+
+# @的参数使用 at() 传入
+robot.at(atMobiles=['150XXXXXXXX'],isAtAll=False)
+
+robot.api.text(content=u'我就是我, 是不一样的烟火@150XXXXXXXX')
+```
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| atMobiles | list | 手机号必须为str类型 |
+| isAtAll | bool | 是否@所有人 |
+
 ### 管理群机器人
 　　为了方便调用不同的机器人，dingbot提供了一种仅需要名字的使用方法。但同时会在本地以明码保存webhook和secret。
 ```python
@@ -86,28 +129,3 @@ import dingbot
 robot=dingbot.DingManage('bluebird'）
 robor.delete()
 ```
-### 使用@
-　　dingbot 使用`@`的方法与钉钉开发文档内的内容完全相同。使用 at() 指定对象。但是，每次发送完信息，at的数据就会重置，需要再次调用at()方法。  
-```python
-import dingbot
-
-webhook='https://oapi.dingtalk.com/robot/send?access_token=XXXXXX'
-secrec ='oneoan69fe149fa4849das4dfda1df981d1fa51d8'
-
-# 初始化一个机器人并传递webhook和secret
-robot=dingbot.DingManage()
-robot.login(webhook,secret)
-
-# @的参数使用 at() 传入
-robot.at(atMobiles=['150XXXXXXXX'],isAtAll=False)
-
-revalue=robot.api.text(content=u'我就是我, 是不一样的烟火@150XXXXXXXX')
-print(revalue)
-```
-| 参数 | 类型 | 说明 |
-| --- | --- | --- |
-| atMobiles | list | 手机号必须为str类型 |
-| isAtAll | bool | @所有人 |
-
-　　如果在文本里没有指定@的位置，会默认加到末尾。  
-　　似乎所有类型的信息都可以使用at()。
