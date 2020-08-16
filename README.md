@@ -79,8 +79,8 @@ picURL | str | NO | 图片URL
 #### markdown
 ```python
 # demo
-robot.api.link(title=u"杭州天气",
-               markdown=u"""
+robot.api.markdown(title=u"杭州天气",
+                   text=u"""
 #### 杭州天气
 > 9度，西北风1级，空气良89，相对温度73%
 > ![screenshot](https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png)
@@ -90,7 +90,7 @@ robot.api.link(title=u"杭州天气",
 参数 | 类型 | 必选 | 说明
 --- | --- | --- | ---
 title | str | YES | 首屏会话透出的展示内容
-markdown | str | YES | markdown格式的消息
+text | str | YES | markdown格式的消息
 
 　　目前并不完全支持所有markdown格式，具体支持如下：
 ```
