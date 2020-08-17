@@ -3,7 +3,7 @@
 # * A SDK for group robots of Dingtalk ( copyright )
 # * Wu Junkai wrote by python 3.7.7 , run in python 2.7.14 and python 3.8.1
 
-__version__ = '3.15.0'
+__version__ = '3.20.0'
 __all__ = ['Card','Dingapi','DingManage']
 
 try:
@@ -83,10 +83,10 @@ class _dingtalk_robot_signature:
 class _dingtalk_robot_manage(_dingtalk_robot_signature):
     'dingtalk robot manage , inherited from _dingbot_robot_signature'
     def __init__(self,name=None):
-        self.conf      = _configure_manage()
-        self.name      = name
-        self.signature = True
-        self.is_login  = False
+        self.conf     = _configure_manage()
+        self.name     = name
+        self.is_sign  = True
+        self.is_login = False
         if(self.name in self.conf.data[u'names']):
             self.login()
 
@@ -121,10 +121,10 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
         _dingtalk_robot_manage.__init__(self,None)
 
     def url(self):
-        if(self.signature):
-            signature_name   = '_python_{}_signature'.format(sys.version_info.major)
-            signature_mothed = getattr(self,signature_name)
-            return signature_mothed(self.webhook,self.secret)
+        if(self.is_sign):
+            sign_name   = '_python_{}_signature'.format(sys.version_info.major)
+            sign_mothed = getattr(self,sign_name)
+            return sign_mothed(self.webhook,self.secret)
         return self.webhook
 
     def __getattr__(self,text):
@@ -135,17 +135,17 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
         raise AttributeError("'DingManage' object has no attribute '{}'".format(text))
 
     def __dir__(self):
-        return ['api','conf','delete','login','name','remember','signature','webhook']
+        return ['api','conf','delete','is_login','is_sign','login','name','remember','webhook']
 
 class DingManage(_dingtalk_robot_manage):
     pass
 
 class _dingtalk_robot_api:
-    'dingtalk robot api for controlling'
+    'dingtalk robot api for sending messages'
     def __init__(self,robot):
-        self.__robot__= robot
-        self.__api__  = None
-        self.__at__   = None
+        self.__robot__ = robot
+        self.__api__   = None
+        self.__at__    = None
 
     def __getattr__(self,mothed):
         self.__api__ = mothed
@@ -155,6 +155,7 @@ class _dingtalk_robot_api:
         url     = self.__robot__.url()
         headers = {'Content-Type': 'application/json'}
         data    = json.dumps({'at':self.__at__,'msgtype':self.__api__,self.__api__:kwattr}).encode("utf-8")
+        print(data)
         post    = _http_post( url, data, headers )
         self.__init__(self.__robot__)
         return eval(post)
@@ -163,7 +164,7 @@ class _dingtalk_robot_api:
         self.__at__ = kwattr
 
     def __dir__(self):
-        return ['ActionCard','FeedCard','at','link','markdown','text']
+        return ['actionCard','at','feedCard','link','markdown','text']
 
 class Dingapi(_dingtalk_robot_api):
     pass

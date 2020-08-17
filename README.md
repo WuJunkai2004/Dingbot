@@ -128,7 +128,7 @@ text | str | YES | markdown格式的消息
 ##### 整体跳转ActionCard
 ```python
 # demo
-robot.api.ActionCard(title=u"乔布斯 20 年前想打造一间苹果咖啡厅，而它正是 Apple Store 的前身",
+robot.api.actionCard(title=u"乔布斯 20 年前想打造一间苹果咖啡厅，而它正是 Apple Store 的前身",
                      singleURL="https://www.dingtalk.com/",
                      singleTitle=u'阅读全文',
                      text=u"""
@@ -147,7 +147,7 @@ singleURL | str | YES | 点击singleTitle按钮触发的URL
 ##### 独立跳转ActionCard
 ```python
 # demo
-robot.api.ActionCard(title=u"乔布斯 20 年前想打造一间苹果咖啡厅，而它正是 Apple Store 的前身",
+robot.api.actionCard(title=u"乔布斯 20 年前想打造一间苹果咖啡厅，而它正是 Apple Store 的前身",
                      btnOrientation='0'
                      btns=[
                           dingbot.Card(title=u"内容不错",actionURL="https://www.dingtalk.com/"),
@@ -163,7 +163,7 @@ Apple Store 的设计正从原来满满的科技感走向生活化，而其生�
 --- | --- | --- | ---
 title | str | YES | 首屏会话透出的展示内容
 text | str | YES | markdown格式的消息
-btns | list | YES | 按钮，为dingbot.Card或dict类型
+btns | list | YES | 按钮，使用dingbot.Card构建卡片
 btnOrientation | str | NO | 0-按钮竖直排列，1-按钮横向排列
 
 dingbot.Card的参数 | 类型 | 必选 | 说明
@@ -174,14 +174,14 @@ actionURL | str | YES | 点击按钮触发的URL
 #### FeedCard
 ```python
 # demo
-robot.api.FeedCard(links=[
-                        dingbot.Card(title=u"时代的火车向前开",messageURL="https://www.dingtalk.com/",picURL="https://gw.alicdn.com/tfs/TB1ayl9mpYqK1RjSZLeXXbXppXa-170-62.png",
-                        dingbot.Card(title=u"时代的火车向前开2",messageURL="https://www.dingtalk.com/",picURL="https://gw.alicdn.com/tfs/TB1ayl9mpYqK1RjSZLeXXbXppXa-170-62.png"
+robot.api.feedCard(links=[
+                        dingbot.Card(title=u"时代的火车向前开",messageURL="https://www.dingtalk.com/",picURL="https://gw.alicdn.com/tfs/TB1ayl9mpYqK1RjSZLeXXbXppXa-170-62.png"),
+                        dingbot.Card(title=u"时代的火车向前开2",messageURL="https://www.dingtalk.com/",picURL="https://gw.alicdn.com/tfs/TB1ayl9mpYqK1RjSZLeXXbXppXa-170-62.png")
                         ])
 ```
 参数 | 类型 | 必选 | 说明
 --- | --- | --- | ---
-links | list | YES | 链接，为dingbot.Card或dict类型
+links | list | YES | 链接，使用dingbot.Card构建卡片
 
 dingbot.Card的参数 | 类型 | 必选 | 说明
 --- | --- | --- | ---
@@ -195,7 +195,6 @@ picURL | str | YES | 单条信息后面图片的URL
 　　如果在消息里没有指定@的位置，会默认加到消息末尾。  
 ```python
 # demo
-
 # @的参数使用 at() 传入
 robot.at(atMobiles=['150XXXXXXXX'],isAtAll=False)
 
@@ -203,7 +202,7 @@ robot.api.text(content=u'我就是我, 是不一样的烟火@150XXXXXXXX')
 ```
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
-| atMobiles | list | 手机号必须为str类型 |
+| atMobiles | list | 手机号为str类型 |
 | isAtAll | bool | 是否@所有人 |
 
 ### 管理群机器人
@@ -234,6 +233,18 @@ robot.api.text(content=u'我就是我, 是不一样的烟火')
 ```pyhton
 robot=dingbot.DingManage('bluebird'）
 robot.delete()
+```
+### Dingapi
+　　在以上所有例子里，发送消息都是调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。
+　　`dingbot.DingManage.api`由`dingbot.DingManage.__getattr__`在调用`api`的时候调用`dingbot.Dingapi`临时构建，因此，会导致其效率的降低。
+　　为了加快程序运行速度，建议采用如下写法。
+```python
+import dingbot
+
+core = dingbot.DingManage('bluebird')
+api = dingbot.Dingapi(core)
+
+api.text(content=u'我就是我, 是不一样的烟火')
 ```
 ## 参考
 https://ding-doc.dingtalk.com/doc#/serverapi2/qf2nxq
