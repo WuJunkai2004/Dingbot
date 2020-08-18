@@ -235,9 +235,9 @@ robot=dingbot.DingManage('bluebird'）
 robot.delete()
 ```
 ### Dingapi
-　　在以上所有例子里，发送消息都是调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。
-　　`dingbot.DingManage.api`由`dingbot.DingManage.__getattr__`在调用`api`的时候调用`dingbot.Dingapi`临时构建，因此，会导致其效率的降低。
-　　为了加快程序运行速度，建议采用如下写法。
+　　在以上所有例子里，发送消息都是调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。  
+　　`dingbot.DingManage.api`由`dingbot.DingManage.__getattr__`在调用`api`的时候调用`dingbot.Dingapi`临时构建，因此，会导致其效率的降低。  
+　　为了加快程序运行速度，可以采用如下写法。  
 ```python
 import dingbot
 
