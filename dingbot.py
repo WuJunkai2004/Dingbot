@@ -3,8 +3,8 @@
 # * A SDK for group robots of Dingtalk ( copyright )
 # * Wu Junkai wrote by python 3.7.7 , run in python 2.7.14 and python 3.8.1
 
-__version__ = '3.20.0'
-__all__ = ['Card','Dingapi','DingManage']
+__version__ = '3.30.0'
+__all__ = ['Card', 'DingManage', 'Dingapi', 'Dingraise']
 
 try:
     from urllib2 import urlopen
@@ -137,9 +137,6 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
     def __dir__(self):
         return ['api','conf','delete','is_login','is_sign','login','name','remember','webhook']
 
-class DingManage(_dingtalk_robot_manage):
-    pass
-
 class _dingtalk_robot_api:
     'dingtalk robot api for sending messages'
     def __init__(self,robot):
@@ -155,7 +152,6 @@ class _dingtalk_robot_api:
         url     = self.__robot__.url()
         headers = {'Content-Type': 'application/json'}
         data    = json.dumps({'at':self.__at__,'msgtype':self.__api__,self.__api__:kwattr}).encode("utf-8")
-        print(data)
         post    = _http_post( url, data, headers )
         self.__init__(self.__robot__)
         return eval(post)
@@ -166,5 +162,17 @@ class _dingtalk_robot_api:
     def __dir__(self):
         return ['actionCard','at','feedCard','link','markdown','text']
 
+class DingError(RuntimeError):
+    'dingtalk robot\'s error object'
+
+class DingManage(_dingtalk_robot_manage):
+    pass
+
 class Dingapi(_dingtalk_robot_api):
     pass
+
+class Dingraise(_dingtalk_robot_api):
+    def __post__(self,**kwattr):
+        remsg=_dingtalk_robot_api.__post__(self,**kwattr)
+        if(remsg['errcode']!=200):
+            raise DingError('[Error {}]: {}'.format(remsg['errcode'],remsg['errmsg']))
