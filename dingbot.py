@@ -3,7 +3,7 @@
 # * A SDK for group robots of Dingtalk ( copyright )
 # * Wu Junkai wrote by python 3.7.7 , run in python 2.7.14 and python 3.8.1
 
-__version__ = '3.30.0'
+__version__ = '3.31.0'
 __all__ = ['Card', 'DingManage', 'Dingapi', 'Dingraise']
 
 try:
@@ -49,12 +49,10 @@ class _configure_manage:
 
     def load(self):
         try:
-            fin=open(self.path,'r')
+            with open(self.path,'r') as fin:
+                self.data=json.load(fin)
         except IOError:
             self.data={'names':[],'robot':[]}
-        else:
-            self.data=json.load(fin)
-            fin.close()
 
     def save(self):
         with open(self.path,'w') as fout:
@@ -99,7 +97,7 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
             self.webhook = self.conf.data[u'robot'][index][u'webhook']
             self.secret  = self.conf.data[u'robot'][index][u'secret']
         elif(not webhook):
-            raise AttributeError('The robot need the webhook')
+            raise DingError('The robot need the webhook.')
 
     def remember(self):
         data={u'name':self.name,u'webhook':self.webhook,u'secret':self.secret}
@@ -113,7 +111,7 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
 
     def delete(self):
         if(self.name not in self.conf.data[u'names']):
-            raise RuntimeError('{} is not a robot\'s name'.format(self.name))
+            raise DingError('{} is not a robot\'s name'.format(self.name))
         index=self.conf.data[u'names'].index(self.name)
         del self.conf.data[u'names'][index]
         del self.conf.data[u'robot'][index]
@@ -122,8 +120,7 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
 
     def url(self):
         if(self.is_sign):
-            sign_name   = '_python_{}_signature'.format(sys.version_info.major)
-            sign_mothed = getattr(self,sign_name)
+            sign_mothed = getattr(self,'_python_{}_signature'.format(sys.version_info.major))
             return sign_mothed(self.webhook,self.secret)
         return self.webhook
 
@@ -131,8 +128,8 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
         if(text=='api' and self.is_login):
             return _dingtalk_robot_api(self)
         if(not self.is_login):
-            raise RuntimeError("The robot must be logged in at first")
-        raise AttributeError("'DingManage' object has no attribute '{}'".format(text))
+            raise DingError("The robot must be logged in at first.")
+        raise AttributeError("'DingManage' object has no attribute '{}'.".format(text))
 
     def __dir__(self):
         return ['api','conf','delete','is_login','is_sign','login','name','remember','webhook']
@@ -174,5 +171,5 @@ class Dingapi(_dingtalk_robot_api):
 class Dingraise(_dingtalk_robot_api):
     def __post__(self,**kwattr):
         remsg=_dingtalk_robot_api.__post__(self,**kwattr)
-        if(remsg['errcode']!=200):
+        if(remsg['errcode']):
             raise DingError('[Error {}]: {}'.format(remsg['errcode'],remsg['errmsg']))

@@ -12,8 +12,9 @@
 ```
 pip install DingRobotPy
 ```
-### 开始使用
-　　`webhook`是必须的，因为这是接口的链接。  
+### DingManage
+　　`DingManage`用来管理钉钉机器人，提供了非常方便的方法来[管理并调用机器人](#管理群机器人)。   
+　　调用`login()`方法注册机器人，`webhook`是在目前是必须的，但之后可以省略。  
 ```python
 # 导入
 import dingbot
@@ -26,7 +27,7 @@ robot=dingbot.DingManage()
 robot.login(webhook)
 
 # 声明安全设置为 非加签
-robot.signature=False
+robot.is_sign=False
 
 # 发送一条简单的信息
 revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
@@ -48,6 +49,35 @@ robot.login(webhook,secret)
 
 revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
+```
+### Dingapi
+　　在以上的例子里，发送消息时调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。
+　　`dingbot.DingManage.api`由`dingbot.DingManage.__getattr__`在传入`api`时调用`dingbot.Dingapi`构建。  
+```python
+import dingbot
+
+robot = dingbot.DingManage('bluebird')
+core = dingbot.Dingapi(robot)
+
+revalue=core.text(content=u'我就是我, 是不一样的烟火')
+print(revalue)
+```
+### Dingraise
+　　一旦调用钉钉机器人的链接，无论是否成功，都会得到一个为json类型的返回值。如调用成功，应该是下面这样
+```json
+{"errcode": 0, "errmsg": "ok"}
+```
+　　但是，每次都检查返回值的话，未免也太麻烦了。  
+　　`dingbot`提供了`dingraise`的方法来自动检查返回值，并在异常时抛出`DingError`。
+```python
+import dingbot
+
+core = dingbot.Dingraise( dingbot.DingManage( 'bluebird' ) )
+
+try:
+    core.text(content=u'我就是我, 是不一样的烟火')
+except Dingbot.DingError as e:
+    print(e)
 ```
 ### api的调用方式
 　　钉钉机器人提供了5种不同的信息类型，分别为[text](#text)，[link](#link)，[markdown](#markdown)，[ActionCard](#ActionCard)，[FeedCard](#FeedCard)。  
@@ -192,13 +222,15 @@ picURL | str | YES | 单条信息后面图片的URL
 ### 使用@
 　　dingbot 使用`@`的方法与钉钉开发文档内的内容完全相同。调用 `at()` 方法，指定被@的对象。  
 　　每次发送完信息， `at()` 的数据就会重置，需要再次调用 `at()` 方法。  
+　　由于`dingbot.DingManage.api`的特点，`at()`方法不会被记录。为了使用`at()`，需要调用`dingbot.Dingapi`。
 　　如果在消息里没有指定@的位置，会默认加到消息末尾。  
 ```python
 # demo
+api=dingbot.Dingapi(robot)
 # @的参数使用 at() 传入
-robot.at(atMobiles=['150XXXXXXXX'],isAtAll=False)
+api.at(atMobiles=['150XXXXXXXX'],isAtAll=False)
 
-robot.api.text(content=u'我就是我, 是不一样的烟火@150XXXXXXXX')
+api.text(content=u'我就是我, 是不一样的烟火@150XXXXXXXX')
 ```
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
@@ -233,18 +265,6 @@ robot.api.text(content=u'我就是我, 是不一样的烟火')
 ```pyhton
 robot=dingbot.DingManage('bluebird'）
 robot.delete()
-```
-### Dingapi
-　　在以上所有例子里，发送消息都是调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。  
-　　`dingbot.DingManage.api`由`dingbot.DingManage.__getattr__`在调用`api`的时候调用`dingbot.Dingapi`临时构建，因此，会导致其效率的降低。  
-　　为了加快程序运行速度，可以采用如下写法。  
-```python
-import dingbot
-
-core = dingbot.DingManage('bluebird')
-api = dingbot.Dingapi(core)
-
-api.text(content=u'我就是我, 是不一样的烟火')
 ```
 ## 参考
 https://ding-doc.dingtalk.com/doc#/serverapi2/qf2nxq
