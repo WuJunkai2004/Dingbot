@@ -3,8 +3,8 @@
 # * A SDK for group robots of Dingtalk ( copyright )
 # * Wu Junkai wrote by python 3.7.7 , run in python 2.7.14 and python 3.8.1
 
-__version__ = '3.31.0'
-__all__ = ['Card', 'DingManage', 'Dingapi', 'Dingraise']
+__version__ = '3.40.0'
+__all__ = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
 
 try:
     from urllib2 import urlopen
@@ -80,6 +80,7 @@ class _dingtalk_robot_signature:
 
 class _dingtalk_robot_manage(_dingtalk_robot_signature):
     'dingtalk robot manage , inherited from _dingbot_robot_signature'
+    __all__ = ['api', 'conf', 'delete', 'is_login', 'is_sign', 'login', 'name', 'remember', 'webhook']
     def __init__(self,name=None):
         self.conf     = _configure_manage()
         self.name     = name
@@ -125,17 +126,13 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
         return self.webhook
 
     def __getattr__(self,text):
-        if(text=='api' and self.is_login):
+        if(text.lower()=='api' and self.is_login):
             return _dingtalk_robot_api(self)
-        if(not self.is_login):
-            raise DingError("The robot must be logged in at first.")
-        raise AttributeError("'DingManage' object has no attribute '{}'.".format(text))
-
-    def __dir__(self):
-        return ['api','conf','delete','is_login','is_sign','login','name','remember','webhook']
+        raise AttributeError("'_dingtalk_robot_manage' object has no attribute '{}'.".format(text))
 
 class _dingtalk_robot_api:
     'dingtalk robot api for sending messages'
+    __all__ = ['actionCard', 'at', 'feedCard', 'link', 'markdown', 'text']
     def __init__(self,robot):
         self.__robot__ = robot
         self.__api__   = None
@@ -149,27 +146,39 @@ class _dingtalk_robot_api:
         url     = self.__robot__.url()
         headers = {'Content-Type': 'application/json'}
         data    = json.dumps({'at':self.__at__,'msgtype':self.__api__,self.__api__:kwattr}).encode("utf-8")
-        post    = _http_post( url, data, headers )
         self.__init__(self.__robot__)
-        return eval(post)
+        return eval( _http_post( url, data, headers ) )
 
     def at(self,**kwattr):
         self.__at__ = kwattr
 
-    def __dir__(self):
-        return ['actionCard','at','feedCard','link','markdown','text']
+class _dingtalk_robot_within_limit(_dingtalk_robot_api):
+    'inherited from _dingtalk_robot_api for judging lime limit'
+    __history__={}
+    def __contains__(self,value):
+        if(self.__robot__.webhook not in self.__history__.keys()):
+            self.__history__[self.__robot__.webhook] = [0] * 20
+        return (value - self.__history__[self.__robot__.webhook][0] > 60 )
 
 class DingError(RuntimeError):
     'dingtalk robot\'s error object'
 
 class DingManage(_dingtalk_robot_manage):
-    pass
+    'inherited from _dingtalk_robot_manage'
 
-class Dingapi(_dingtalk_robot_api):
-    pass
+class DingAPI(_dingtalk_robot_api):
+    'inherited from _dingtalk_robot_api for sending messages'
 
-class Dingraise(_dingtalk_robot_api):
+class DingRaise(_dingtalk_robot_api):
+    'inherited from _dingtalk_robot_api and raise error while sending messages wrong'
     def __post__(self,**kwattr):
         remsg=_dingtalk_robot_api.__post__(self,**kwattr)
         if(remsg['errcode']):
             raise DingError('[Error {}]: {}'.format(remsg['errcode'],remsg['errmsg']))
+
+class DingLimit(_dingtalk_robot_within_limit):
+    'inherited from _dingtalk_robot_api for sending while you can'
+    def __post__(self,**kwattr):
+        if(time.time() in self):
+            self.__history__[self.robot.webhook] = self.__history__[self.__robot__.webhook][1:] + [ time.time() ]
+            return _dingtalk_robot_api.__post__(self,**kwattr)
