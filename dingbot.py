@@ -152,14 +152,6 @@ class _dingtalk_robot_api:
     def at(self,**kwattr):
         self.__at__ = kwattr
 
-class _dingtalk_robot_within_limit(_dingtalk_robot_api):
-    'inherited from _dingtalk_robot_api for judging lime limit'
-    __history__={}
-    def __contains__(self,value):
-        if(self.__robot__.webhook not in self.__history__.keys()):
-            self.__history__[self.__robot__.webhook] = [0] * 20
-        return (value - self.__history__[self.__robot__.webhook][0] > 60 )
-
 class DingError(RuntimeError):
     'dingtalk robot\'s error object'
 
@@ -176,9 +168,15 @@ class DingRaise(_dingtalk_robot_api):
         if(remsg['errcode']):
             raise DingError('[Error {}]: {}'.format(remsg['errcode'],remsg['errmsg']))
 
-class DingLimit(_dingtalk_robot_within_limit):
-    'inherited from _dingtalk_robot_api for sending while you can'
+class DingLimit(_dingtalk_robot_api):
+    'inherited from _dingtalk_robot_api for sending while you are in the time limited'
+    __his__={}
+    def __contains__(self,value):
+        if(self.__robot__.webhook not in self.__his__.keys()):
+            self.__his__[self.__robot__.webhook] = [0] * 20
+        return (value - self.__his__[self.__robot__.webhook][0] > 60 )
+
     def __post__(self,**kwattr):
         if(time.time() in self):
-            self.__history__[self.robot.webhook] = self.__history__[self.__robot__.webhook][1:] + [ time.time() ]
+            self.__his__[self.robot.webhook] = self.__his__[self.__robot__.webhook][1:] + [ time.time() ]
             return _dingtalk_robot_api.__post__(self,**kwattr)
