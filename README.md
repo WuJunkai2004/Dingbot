@@ -1,11 +1,11 @@
-# Dingbot : 一个为控制钉钉群机器人而生的项目
+# Dingbot : 一个轻量级钉钉群机器人SDK
 ## 介绍
-　　这是钉钉机器人 api ，在 python 2.17.7 的环境下编写而成。同时可在 python 3.x 的环境下运行。  
-　　本 api 与钉钉支持文档的用法完全相同，开发者可以根据钉钉支持文档自由编写。  
-　　我们努力让所有人 —— 无论是否接受过编程教育 —— 都可以快速上手，开发了 `line.py` 模块，可用于命令行。  
+　　这是钉钉机器人SDK，在 python 2.17.7 的环境下编写而成。可在所有python环境下运行。  
+　　本SDK与[钉钉支持文档](https://ding-doc.dingtalk.com/doc#/serverapi2/qf2nxq)的用法完全相同，开发者可以根据[钉钉支持文档](https://ding-doc.dingtalk.com/doc#/serverapi2/qf2nxq)自由编写。  
+　　<del>我们努力让所有人 —— 无论是否接受过编程教育 —— 都可以快速上手，开发了 `line.py` 模块，可用于命令行。</del>  
 　　本项目还在快速迭代中，本页的例子可能会失效或超前。此时，请联系 吴君明 进行修改或获取最新版本。
 ## 作者
-　　由[吴君凯](wujunkai20041123@outlook.com)建立框架，并由[吴君明](2706914036@qq.com)负责漏洞修复。
+　　由 吴君凯 wujunkai20041123@outlook.com 建立框架，并由 吴君明 2706914036@qq.com 负责漏洞修复与后续支持。
 ## 使用方法
 ### Step Zero
 　　需要提前在钉钉群内注册一个自定义机器人。并下载Dingbot  
@@ -13,8 +13,8 @@
 pip install DingRobotPy
 ```
 ### DingManage
-　　`DingManage`用来管理钉钉机器人，提供了非常方便的方法来[管理并调用机器人](#管理群机器人)。   
-　　调用`login()`方法注册机器人，`webhook`是在目前是必须的，但之后可以省略。  
+　　`DingManage`是`_dingtalk_robot_manage`的表层接口，提供了非常方便的方法来[管理并调用机器人](#管理群机器人)。   
+　　调用`login()`方法登入机器人。  
 ```python
 # 导入
 import dingbot
@@ -35,8 +35,8 @@ revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 # 检查返回值
 print(revalue)
 ```
-　　但是上述用法是不推荐的。这里推荐安全设置使用 加签。加签可以适应大部分应用场景，同时保证机器人的安全性。  
-　　dingbot默认机器人的安全设置为加签。
+　　但是上述用法是不推荐的。推荐安全设置使用`加签`。加签可以适应大部分应用场景，同时保证机器人的安全。  
+　　`dingbot`默认机器人的安全设置为加签。
 ```python
 import dingbot
 
@@ -50,9 +50,9 @@ robot.login(webhook,secret)
 revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
 ```
-### Dingapi
-　　在以上的例子里，发送消息时调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。
-　　`dingbot.DingManage.api`由`dingbot.DingManage.__getattr__`在传入`api`时调用`dingbot.Dingapi`构建。  
+### DingAPI
+　　上面的例子里，发送消息时调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。
+　　而是由`dingbot.DingManage.__getattr__`在传入`api`时调用`dingbot.DingAPI`临时构建。  
 ```python
 import dingbot
 
@@ -62,26 +62,27 @@ core = dingbot.Dingapi(robot)
 revalue=core.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
 ```
-### Dingraise
-　　一旦调用钉钉机器人的链接，无论是否成功，都会得到一个为json类型的返回值。如调用成功，应该是下面这样
+### DingRaise
+　　一旦调用钉钉机器人的链接，无论是否成功，都会得到一个为json类型的返回值。若调用成功，为
 ```json
 {"errcode": 0, "errmsg": "ok"}
 ```
 　　但是，每次都检查返回值的话，未免也太麻烦了。  
-　　`dingbot`提供了`dingraise`的方法来自动检查返回值，并在异常时抛出`DingError`。
+　　`dingbot`提供了`dingRaise`的方法来自动检查返回值，并在异常时抛出`dingbot.DingError`。
 ```python
 import dingbot
 
-core = dingbot.Dingraise( dingbot.DingManage( 'bluebird' ) )
+core = dingbot.DingRaise( dingbot.DingManage( 'bluebird' ) )
 
 try:
     core.text(content=u'我就是我, 是不一样的烟火')
-except Dingbot.DingError as e:
+except dingbot.DingError as e:
     print(e)
 ```
 ### api的调用方式
 　　钉钉机器人提供了5种不同的信息类型，分别为[text](#text)，[link](#link)，[markdown](#markdown)，[ActionCard](#ActionCard)，[FeedCard](#FeedCard)。  
-　　若无特殊说明，字符串的编码均为 UTF-8 。参数对大小写敏感。
+　　卡片类型的消息可以调用`dingbot.Card`。  
+　　若无特殊说明，字符串的编码均为`UTF-8`。参数对大小写敏感。
 #### text
 ```python
 # demo
@@ -153,7 +154,7 @@ text | str | YES | markdown格式的消息
 ```
 
 #### ActionCard
-　　ActionCard分为两种，分别为整体跳转ActionCard类型和独立跳转ActionCard类型。  
+　　ActionCard有两种，分别为整体跳转ActionCard类型和独立跳转ActionCard类型。  
 　　两种不同的类型共用一个相同的接口，由传入的参数决定具体的消息类型。
 ##### 整体跳转ActionCard
 ```python
@@ -220,10 +221,10 @@ messageURL | str | YES | 点击单条信息到跳转链接
 picURL | str | YES | 单条信息后面图片的URL
 
 ### 使用@
-　　dingbot 使用`@`的方法与钉钉开发文档内的内容完全相同。调用 `at()` 方法，指定被@的对象。  
-　　每次发送完信息， `at()` 的数据就会重置，需要再次调用 `at()` 方法。  
-　　由于`dingbot.DingManage.api`的特点，`at()`方法不会被记录。为了使用`at()`，需要调用`dingbot.Dingapi`。
-　　如果在消息里没有指定@的位置，会默认加到消息末尾。  
+　　`dingbot`使用`@`的时需调用 `at()` 方法，指定被@的对象。  
+　　每次发送完信息，`at()`的数据就会重置，需要再次调用 `at()` 方法。  
+　　`dingbot.DingManage.api`由于其构建方法，不能使用`@`，需要调用`dingbot.Dingapi`。
+　　如果在消息里没有指定`@`的位置，会默认加到消息末尾。  
 ```python
 # demo
 api=dingbot.Dingapi(robot)
@@ -238,11 +239,9 @@ api.text(content=u'我就是我, 是不一样的烟火@150XXXXXXXX')
 | isAtAll | bool | 是否@所有人 |
 
 ### 管理群机器人
-　　为了方便调用不同的机器人，dingbot提供了一种仅需要名字的使用方法。但同时会在本地以明码保存webhook和secret。
+　　为了方便调用不同的机器人，dingbot提供了一种仅需要名字的登陆方法。但同时会在本地以明码保存`webhook`和`secret`。
 ```python
-'''
-保存一个机器人，名字为bluebird（可自行更改）
-'''
+# 保存一个机器人，名字为bluebird（可自行更改）
 import dingbot
 
 webhook='https://oapi.dingtalk.com/robot/send?access_token=XXXXXX'
@@ -258,7 +257,7 @@ robot.remember()
 ```python
 # 调用 bluebird
 robot=dingbot.DingManage('bluebird')
-
+# 这里不需要再次调用`login()`
 robot.api.text(content=u'我就是我, 是不一样的烟火')
 ```
 　　当然，也可以删除机器人。
