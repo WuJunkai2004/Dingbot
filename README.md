@@ -51,7 +51,7 @@ revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
 ```
 ### DingAPI
-　　上面的例子里，发送消息时调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。
+　　上面的例子里，发送消息时调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。  
 　　而是由`dingbot.DingManage.__getattr__`在传入`api`时调用`dingbot.DingAPI`临时构建。  
 ```python
 import dingbot
@@ -78,6 +78,18 @@ try:
     core.text(content=u'我就是我, 是不一样的烟火')
 except dingbot.DingError as e:
     print(e)
+```
+### DingLimit
+　　钉钉机器人消息发送频率限制为每分钟20条。若大量连续发送回被限流10分钟。  
+　　为了防止超出发送频率限制，`Dingbot`提供了`dingbot.DingLimit`来控制发送频率。  
+　　当未超过频率限制时，回正常返回返回值。若超过，则停止发送并返回空值。
+```python
+import dingbot,time
+
+core = dingbot.DingLimit( dingbot.DingManage( 'bluebird' ) )
+
+while(not core.text(content=u'我就是我, 是不一样的烟火') ):
+    time.sleep(1)
 ```
 ### api的调用方式
 　　钉钉机器人提供了5种不同的信息类型，分别为[text](#text)，[link](#link)，[markdown](#markdown)，[ActionCard](#ActionCard)，[FeedCard](#FeedCard)。  
