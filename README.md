@@ -1,11 +1,11 @@
 # Dingbot : 一个轻量级钉钉群机器人SDK
 ## 介绍
-　　这是钉钉机器人SDK，在 python 2.17.7 的环境下编写而成。可在所有python环境下运行。  
+　　这是一个轻量级的钉钉机器人SDK，在 python 2.17.7 的环境下编写而成。可在所有python环境下运行。  
 　　本SDK与[钉钉支持文档](https://ding-doc.dingtalk.com/doc#/serverapi2/qf2nxq)的用法完全相同，开发者可以根据[钉钉支持文档](https://ding-doc.dingtalk.com/doc#/serverapi2/qf2nxq)自由编写。  
-　　<del>我们努力让所有人 —— 无论是否接受过编程教育 —— 都可以快速上手，开发了 `line.py` 模块，可用于命令行。</del>  
+　　~~我们努力让所有人 —— 无论是否接受过编程教育 —— 都可以快速上手，开发了 `line.py` 模块，可用于命令行。~~  
 　　本项目还在快速迭代中，本页的例子可能会失效或超前。此时，请联系 吴君明 进行修改或获取最新版本。
 ## 作者
-　　由 吴君凯 wujunkai20041123@outlook.com 建立框架，并由 吴君明 2706914036@qq.com 负责漏洞修复与后续支持。
+　　由 [吴君凯](mailto:wujunkai20041123@outlook.com) 建立框架，并由 [吴君明](mailto:2706914036@qq.com) 负责漏洞修复与后续支持。
 ## 使用方法
 ### Step Zero
 　　需要提前在钉钉群内注册一个自定义机器人。并下载Dingbot  
@@ -235,7 +235,7 @@ picURL | str | YES | 单条信息后面图片的URL
 ### 使用@
 　　`dingbot`使用`@`的时需调用 `at()` 方法，指定被@的对象。  
 　　每次发送完信息，`at()`的数据就会重置，需要再次调用 `at()` 方法。  
-　　`dingbot.DingManage.api`由于其构建方法，不能使用`@`，需要调用`dingbot.Dingapi`。
+　　`dingbot.DingManage.api`由于其构建方法，不能使用`@`，需要调用`dingbot.Dingapi`。  
 　　如果在消息里没有指定`@`的位置，会默认加到消息末尾。  
 ```python
 # demo
