@@ -3,7 +3,7 @@
 # * A SDK for group robots of Dingtalk ( copyright )
 # * Wu Junkai wrote by python 3.7.7 , run in python 2.7.14 and python 3.8.1
 
-__version__ = '3.40.0'
+__version__ = '3.50.0'
 __all__ = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
 
 try:
@@ -18,15 +18,17 @@ except ImportError:
 import base64
 import hashlib
 import hmac
+
 import json
 import sys
 import time
 
+Card = dict
+
 def _http_manage(url,data,headers):
     'Responsible for network access'
-    text=urlopen(Request(url,data,headers)).read()
-    if(sys.version_info.major==3):
-        text = text.decode('utf-8')
+    text = urlopen(Request(url,data,headers)).read()
+    text = text.decode('utf-8') if(sys.version_info.major==3)else text
     return text
 
 def _http_get(url,headers):
@@ -37,9 +39,15 @@ def _http_post(url,data,headers):
     'Inherited from _http_manage and responsible for network get'
     return _http_manage(url,data,headers)
 
-def Card(**kwattr):
-    'Changes values into dist'
-    return kwattr
+def _signature(webhook,secret,var=sys.version_info.major):
+    timestamp          = long(round(time.time() * 1000))        if(var==2)else str(round(time.time() * 1000))
+    secret_enc         = bytes(secret).encode('utf-8')          if(var==2)else secret.encode('utf-8')
+    string_to_sign     = '{}\n{}'.format(timestamp, secret)
+    string_to_sign_enc = bytes(string_to_sign).encode('utf-8')  if(var==2)else string_to_sign.encode('utf-8')
+    hmac_code          = hmac.new(secret_enc, string_to_sign_enc, digestmod=hashlib.sha256).digest()
+    sign               = quote_plus(base64.b64encode(hmac_code))
+    return '{}&timestamp={}&sign={}'.format(webhook,timestamp,sign)
+    
 
 class _configure_manage:
     'Configuration file read and manage'
@@ -58,33 +66,12 @@ class _configure_manage:
         with open(self.path,'w') as fout:
             json.dump(self.data,fout)
 
-class _dingtalk_robot_signature:
-    'dingtalk robot signature algorithm'
-    def _python_2_signature(self,webhook,secret):
-        timestamp          = long(round(time.time() * 1000))
-        secret_enc         = bytes(secret).encode('utf-8')
-        string_to_sign     = '{}\n{}'.format(timestamp, secret)
-        string_to_sign_enc = bytes(string_to_sign).encode('utf-8')
-        hmac_code          = hmac.new(secret_enc, string_to_sign_enc, digestmod=hashlib.sha256).digest()
-        sign               = quote_plus(base64.b64encode(hmac_code))
-        return '{}&timestamp={}&sign={}'.format(webhook,timestamp,sign)
-
-    def _python_3_signature(self,webhook,secret):
-        timestamp          = str(round(time.time() * 1000))
-        secret_enc         = secret.encode('utf-8')
-        string_to_sign     = '{}\n{}'.format(timestamp, secret)
-        string_to_sign_enc = string_to_sign.encode('utf-8')
-        hmac_code          = hmac.new(secret_enc, string_to_sign_enc, digestmod=hashlib.sha256).digest()
-        sign               = quote_plus(base64.b64encode(hmac_code))
-        return '{}&timestamp={}&sign={}'.format(webhook,timestamp,sign)
-
-class _dingtalk_robot_manage(_dingtalk_robot_signature):
+class _dingtalk_robot_manage:
     'dingtalk robot manage , inherited from _dingbot_robot_signature'
     __all__ = ['api', 'conf', 'delete', 'is_login', 'is_sign', 'login', 'name', 'remember', 'webhook']
     def __init__(self,name=None):
         self.conf     = _configure_manage()
         self.name     = name
-        self.is_sign  = True
         self.is_login = False
         if(self.name in self.conf.data[u'names']):
             self.login()
@@ -117,12 +104,11 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
         del self.conf.data[u'names'][index]
         del self.conf.data[u'robot'][index]
         self.conf.save()
-        _dingtalk_robot_manage.__init__(self,None)
+        _dingtalk_robot_manage.__init__(self)
 
     def url(self):
-        if(self.is_sign):
-            sign_mothed = getattr(self,'_python_{}_signature'.format(sys.version_info.major))
-            return sign_mothed(self.webhook,self.secret)
+        if(self.secret):
+            return _signature(self.webhook,self.secret)
         return self.webhook
 
     def __getattr__(self,text):
@@ -132,7 +118,7 @@ class _dingtalk_robot_manage(_dingtalk_robot_signature):
 
 class _dingtalk_robot_api:
     'dingtalk robot api for sending messages'
-    __all__ = ['actionCard', 'at', 'feedCard', 'link', 'markdown', 'text']
+    __all__ = ['actionCard', 'at', 'feedCard', 'link', 'markdown', 'text', 'send']
     def __init__(self,robot):
         self.__robot__ = robot
         self.__api__   = None
@@ -140,9 +126,9 @@ class _dingtalk_robot_api:
 
     def __getattr__(self,mothed):
         self.__api__ = mothed
-        return self.__post__
+        return self.send
 
-    def __post__(self,**kwattr):
+    def send(self,**kwattr):
         url     = self.__robot__.url()
         headers = {'Content-Type': 'application/json'}
         data    = json.dumps({'at':self.__at__,'msgtype':self.__api__,self.__api__:kwattr}).encode("utf-8")
@@ -153,7 +139,7 @@ class _dingtalk_robot_api:
         self.__at__ = kwattr
 
 class DingError(RuntimeError):
-    'dingtalk robot\'s error object'
+    'the Error for dingbot'
 
 class DingManage(_dingtalk_robot_manage):
     'inherited from _dingtalk_robot_manage'
@@ -163,7 +149,7 @@ class DingAPI(_dingtalk_robot_api):
 
 class DingRaise(_dingtalk_robot_api):
     'inherited from _dingtalk_robot_api and raise error while sending messages wrong'
-    def __post__(self,**kwattr):
+    def send(self,**kwattr):
         remsg=_dingtalk_robot_api.__post__(self,**kwattr)
         if(remsg['errcode']):
             raise DingError('[Error {}]: {}'.format(remsg['errcode'],remsg['errmsg']))
@@ -176,7 +162,7 @@ class DingLimit(_dingtalk_robot_api):
             self.__his__[self.__robot__.webhook] = [0] * 20
         return (value - self.__his__[self.__robot__.webhook][0] > 60 )
 
-    def __post__(self,**kwattr):
+    def send(self,**kwattr):
         if(time.time() in self):
             self.__his__[self.robot.webhook] = self.__his__[self.__robot__.webhook][1:] + [ time.time() ]
-            return _dingtalk_robot_api.__post__(self,**kwattr)
+            return _dingtalk_robot_api.send(self,**kwattr)
