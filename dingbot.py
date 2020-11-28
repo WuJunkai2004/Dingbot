@@ -7,13 +7,11 @@ __version__ = '3.50.0'
 __all__ = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
 
 try:
-    from urllib2 import urlopen
-    from urllib2 import Request
-    from urllib  import quote_plus
+    import urllib2 as _u
+    from urllib import quote_plus
 except ImportError:
-    from urllib.request import urlopen
-    from urllib.request import Request
-    from urllib.parse   import quote_plus
+    import urllib.request as _u
+    from urllib.parse import quote_plus
 
 import base64
 import hashlib
@@ -23,11 +21,13 @@ import json
 import sys
 import time
 
+urlopen = _u.urlopen
+request = _u.Request
 Card = dict
 
 def _http_manage(url,data,headers):
     'Responsible for network access'
-    text = urlopen(Request(url,data,headers)).read()
+    text = urlopen(request(url,data,headers)).read()
     text = text.decode('utf-8') if(sys.version_info.major==3)else text
     return text
 
