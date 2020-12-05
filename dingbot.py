@@ -4,7 +4,7 @@
 # * Wu Junkai wrote by python 3.7.7 , run in python 2.7.14 and python 3.8.1
 
 __version__ = '3.50.0'
-__all__ = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
+__all__ = ['Card', 'DingApi', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
 
 try:
     import urllib2 as _u
@@ -47,7 +47,6 @@ def _signature(webhook,secret,var=sys.version_info.major):
     hmac_code          = hmac.new(secret_enc, string_to_sign_enc, digestmod=hashlib.sha256).digest()
     sign               = quote_plus(base64.b64encode(hmac_code))
     return '{}&timestamp={}&sign={}'.format(webhook,timestamp,sign)
-    
 
 class _configure_manage:
     'Configuration file read and manage'
@@ -68,7 +67,7 @@ class _configure_manage:
 
 class _dingtalk_robot_manage:
     'dingtalk robot manage , inherited from _dingbot_robot_signature'
-    __all__ = ['api', 'conf', 'delete', 'is_login', 'is_sign', 'login', 'name', 'remember', 'webhook']
+    __all__ = ['conf', 'delete', 'is_login', 'login', 'name', 'remember', 'webhook']
     def __init__(self,name=None):
         self.conf     = _configure_manage()
         self.name     = name
@@ -112,8 +111,8 @@ class _dingtalk_robot_manage:
         return self.webhook
 
     def __getattr__(self,text):
-        if(text.lower()=='api' and self.is_login):
-            return _dingtalk_robot_api(self)
+        if('Ding{}'.format(text.title()) in dir() and self.is_login):
+            return eval('Ding{}'.format(text.title()))(self)
         raise AttributeError("'_dingtalk_robot_manage' object has no attribute '{}'.".format(text))
 
 class _dingtalk_robot_api:
@@ -144,7 +143,7 @@ class DingError(RuntimeError):
 class DingManage(_dingtalk_robot_manage):
     'inherited from _dingtalk_robot_manage'
 
-class DingAPI(_dingtalk_robot_api):
+class DingApi(_dingtalk_robot_api):
     'inherited from _dingtalk_robot_api for sending messages'
 
 class DingRaise(_dingtalk_robot_api):
