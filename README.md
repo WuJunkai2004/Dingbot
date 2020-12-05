@@ -13,8 +13,8 @@
 pip install DingRobotPy
 ```
 ### DingManage
-　　`DingManage`是`_dingtalk_robot_manage`的表层接口，提供了非常方便的方法来[管理并调用机器人](#管理群机器人)。   
-　　调用`login()`方法登入机器人。  
+　　`DingManage`是`_dingtalk_robot_manage`的接口，提供了非常方便的方法来[管理并调用机器人](#管理群机器人)。   
+　　调用`login()`登记机器人。  
 ```python
 # 导入
 import dingbot
@@ -26,9 +26,6 @@ webhook='https://oapi.dingtalk.com/robot/send?access_token=XXXXXX'
 robot=dingbot.DingManage()
 robot.login(webhook)
 
-# 声明安全设置为 非加签
-robot.is_sign=False
-
 # 发送一条简单的信息
 revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 
@@ -36,21 +33,19 @@ revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
 ```
 　　但是上述用法是不推荐的。推荐安全设置使用`加签`。加签可以适应大部分应用场景，同时保证机器人的安全。  
-　　`dingbot`默认机器人的安全设置为加签。
 ```python
 import dingbot
 
 webhook='https://oapi.dingtalk.com/robot/send?access_token=XXXXXX'
 secret ='oneoan69fe149fa4849das4dfda1df981d1fa51d8'
 
-# 初始化一个机器人并传递webhook和secret
 robot=dingbot.DingManage()
 robot.login(webhook,secret)
 
 revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
 ```
-### DingAPI
+### DingApi
 　　上面的例子里，发送消息时调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。  
 　　而是由`dingbot.DingManage.__getattr__`在传入`api`时调用`dingbot.DingAPI`临时构建。  
 ```python
@@ -80,7 +75,7 @@ except dingbot.DingError as e:
     print(e)
 ```
 ### DingLimit
-　　钉钉机器人消息发送频率限制为每分钟20条。若大量连续发送回被限流10分钟。  
+　　钉钉机器人消息发送频率限制为每分钟20条。若大量连续发送会被限流10分钟。  
 　　为了防止超出发送频率限制，`Dingbot`提供了`dingbot.DingLimit`来控制发送频率。  
 　　当未超过频率限制时，回正常返回返回值。若超过，则停止发送并返回空值。
 ```python
