@@ -1,10 +1,10 @@
 # coding=utf-8
 
 # * A SDK for group robots of Dingtalk ( copyright )
-# * Wu Junkai wrote by python 3.7.7 , run in python 2.7.14 and python 3.8.1
+# * Wu Junkai wrote it by python 3.7.7 , run in python 2.7.14 , 3.8.1 and 3.8.7
 
-__version__ = '3.50.0'
-__all__ = ['Card', 'DingApi', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
+__version__ = '3.55.0'
+__all__ = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
 
 try:
     import urllib2 as _u
@@ -111,8 +111,9 @@ class _dingtalk_robot_manage:
         return self.webhook
 
     def __getattr__(self,text):
-        if('Ding{}'.format(text.title()) in dir() and self.is_login):
-            return eval('Ding{}'.format(text.title()))(self)
+        if('ding{}'.format(text.lower()) in [i.lower() for i in __all__] and self.is_login):
+            posi = [i.lower() for i in __all__].index('ding{}'.format(text.lower()))
+            return eval(__all__[posi])(self)
         raise AttributeError("'_dingtalk_robot_manage' object has no attribute '{}'.".format(text))
 
 class _dingtalk_robot_api:
@@ -138,12 +139,12 @@ class _dingtalk_robot_api:
         self.__at__ = kwattr
 
 class DingError(RuntimeError):
-    'the Error for dingbot'
+    'the Error for dingbot and inherited from RuntimeError'
 
 class DingManage(_dingtalk_robot_manage):
     'inherited from _dingtalk_robot_manage'
 
-class DingApi(_dingtalk_robot_api):
+class DingAPI(_dingtalk_robot_api):
     'inherited from _dingtalk_robot_api for sending messages'
 
 class DingRaise(_dingtalk_robot_api):
