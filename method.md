@@ -25,7 +25,8 @@ revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 # 检查返回值
 print(revalue)
 ```
-　　但是上述用法是不推荐的。推荐安全设置使用`加签`。加签可以适应大部分应用场景，同时保证机器人的安全。  
+　　但是由于安全设置，不推荐上述写法。
+　　推荐使用`加签`发送，可以适应大部分应用场景，同时保证数据的安全。  
 ```python
 import dingbot
 
@@ -39,8 +40,8 @@ revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
 ```
 ### DingAPI
-　　上面的例子里，发送消息时调用`dingbot.DingManage.api`。但事实上，`dingbot.DingManage`并不存在`api`这个实例。  
-　　而是由`dingbot.DingManage.__getattr__`在传入`api`时调用`dingbot.DingAPI`临时构建。  
+　　上面的例子里，发送消息时调用`dingbot.DingManage.api`。  
+　　同时，也可以选择调用`dingbot.DingAPI`达到同样的效果。  
 ```python
 import dingbot
 
@@ -51,12 +52,12 @@ revalue=core.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
 ```
 ### DingRaise
-　　一旦调用钉钉机器人的链接，无论是否成功，都会得到一个为json类型的返回值。若调用成功，为
+　　发送消息后，无论是否成功，都会得到一个为json类型的返回值。若调用成功，为
 ```json
 {"errcode": 0, "errmsg": "ok"}
 ```
-　　但是，每次都检查返回值的话，未免也太麻烦了。  
-　　`dingbot`提供了`dingRaise`的方法来自动检查返回值，并在异常时抛出`dingbot.DingError`。
+　　`dingbot`提供了`DingRaise`的方法来自动检查返回值，并在异常时抛出`dingbot.DingError`。  
+　　可以通过`dingbot.DingManage.Raise`快速调用本方法。
 ```python
 import dingbot
 
@@ -70,7 +71,8 @@ except dingbot.DingError as e:
 ### DingLimit
 　　钉钉机器人消息发送频率限制为每分钟20条。若大量连续发送会被限流10分钟。  
 　　为了防止超出发送频率限制，`Dingbot`提供了`dingbot.DingLimit`来控制发送频率。  
-　　当未超过频率限制时，回正常返回返回值。若超过，则停止发送并返回空值。
+　　当未超过频率限制时，则正常返回返回值。若即将超过，则停止发送并返回空值。  
+　　可以通过`dingbot.DingManage.limit`快速调用本方法。
 ```python
 import dingbot,time
 
@@ -181,8 +183,12 @@ singleURL | str | YES | 点击singleTitle按钮触发的URL
 robot.api.actionCard(title=u"乔布斯 20 年前想打造一间苹果咖啡厅，而它正是 Apple Store 的前身",
                      btnOrientation='0'
                      btns=[
-                          dingbot.Card(title=u"内容不错",actionURL="https://www.dingtalk.com/"),
-                          dingbot.Card(title=u"不感兴趣",actionURL="https://www.dingtalk.com/")
+                          dingbot.Card(title=u"内容不错",
+                                       actionURL="https://www.dingtalk.com/"
+                                      ),
+                          dingbot.Card(title=u"不感兴趣",
+                                       actionURL="https://www.dingtalk.com/"
+                                      )
                           ],
                      text=u"""
 ![screenshot](https://gw.alicdn.com/tfs/TB1ut3xxbsrBKNjSZFpXXcXhFXa-846-786.png) 
@@ -206,8 +212,14 @@ actionURL | str | YES | 点击按钮触发的URL
 ```python
 # demo
 robot.api.feedCard(links=[
-                        dingbot.Card(title=u"时代的火车向前开",messageURL="https://www.dingtalk.com/",picURL="https://gw.alicdn.com/tfs/TB1ayl9mpYqK1RjSZLeXXbXppXa-170-62.png"),
-                        dingbot.Card(title=u"时代的火车向前开2",messageURL="https://www.dingtalk.com/",picURL="https://gw.alicdn.com/tfs/TB1ayl9mpYqK1RjSZLeXXbXppXa-170-62.png")
+                        dingbot.Card(title=u"时代的火车向前开",
+                                     messageURL="https://www.dingtalk.com/",
+                                     picURL="https://gw.alicdn.com/tfs/TB1ayl9mpYqK1RjSZLeXXbXppXa-170-62.png"
+                                    ),
+                        dingbot.Card(title=u"时代的火车向前开2",
+                                     messageURL="https://www.dingtalk.com/",
+                                     picURL="https://gw.alicdn.com/tfs/TB1ayl9mpYqK1RjSZLeXXbXppXa-170-62.png"
+                                    )
                         ])
 ```
 参数 | 类型 | 必选 | 说明
@@ -223,11 +235,11 @@ picURL | str | YES | 单条信息后面图片的URL
 ### 使用@
 　　`dingbot`使用`@`的时需调用 `at()` 方法，指定被@的对象。  
 　　每次发送完信息，`at()`的数据就会重置，需要再次调用 `at()` 方法。  
-　　`dingbot.DingManage.api`由于其构建方法，不能使用`@`，需要调用`dingbot.Dingapi`。  
+　　`dingbot.DingManage.api`由于其构建方法，不能使用`@`。  
 　　如果在消息里没有指定`@`的位置，会默认加到消息末尾。  
 ```python
 # demo
-api=dingbot.Dingapi(robot)
+api=dingbot.DingAPI(robot)
 # @的参数使用 at() 传入
 api.at(atMobiles=['150XXXXXXXX'],isAtAll=False)
 
