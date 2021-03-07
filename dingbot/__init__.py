@@ -3,7 +3,7 @@
 # * A SDK for group robots of Dingtalk ( copyright )
 # * Wu Junkai wrote it by python 3.7.7 , run in python 2.7.14 , 3.8.1 and 3.8.7
 
-__version__ = '3.55.0'
+__version__ = '3.60.0'
 __all__ = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
 
 try:
@@ -150,9 +150,10 @@ class DingAPI(_dingtalk_robot_api):
 class DingRaise(_dingtalk_robot_api):
     'inherited from _dingtalk_robot_api and raise error while sending messages wrong'
     def send(self,**kwattr):
-        remsg=_dingtalk_robot_api.__post__(self,**kwattr)
+        remsg=_dingtalk_robot_api.send(self,**kwattr)
         if(remsg['errcode']):
             raise DingError('[Error {}]: {}'.format(remsg['errcode'],remsg['errmsg']))
+        return remsg
 
 class DingLimit(_dingtalk_robot_api):
     'inherited from _dingtalk_robot_api for sending while you are in the time limited'
@@ -160,9 +161,9 @@ class DingLimit(_dingtalk_robot_api):
     def __contains__(self,value):
         if(self.__robot__.webhook not in self.__his__.keys()):
             self.__his__[self.__robot__.webhook] = [0] * 20
-        return (value - self.__his__[self.__robot__.webhook][0] > 60 )
+        return (value - self.__his__[self.__robot__.webhook][0] <= 60 )
 
     def send(self,**kwattr):
-        if(time.time() in self):
-            self.__his__[self.robot.webhook] = self.__his__[self.__robot__.webhook][1:] + [ time.time() ]
+        if(time.time() not in self):
+            self.__his__[self.__robot__.webhook] = self.__his__[self.__robot__.webhook][1:] + [ time.time() ]
             return _dingtalk_robot_api.send(self,**kwattr)
