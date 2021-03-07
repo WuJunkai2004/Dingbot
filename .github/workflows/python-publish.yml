@@ -14,7 +14,7 @@ jobs:
   deploy:
     name: publish python package to PYPI
     # 此作业在 Linux 上运行
-    runs-on: ubuntu--18.04
+    runs-on: ubuntu-18.04
 
     steps:
     # 此步骤使用 GitHub 的 https://github.com/actions/checkout
