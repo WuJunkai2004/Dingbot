@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     name: build the package
-    runs-on: ubunto-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@master
     - name: steps
