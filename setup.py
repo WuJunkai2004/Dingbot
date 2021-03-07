@@ -3,9 +3,9 @@ from distutils.core import setup
 import dingbot
 
 try:
-    readme = open('README.md').read()
+    readme = open('README').read()
 except:
-    readme = open('README.md',encoding='utf-8').read()
+    readme = open('README',encoding='utf-8').read()
 
 kw = {
     "name": 'DingRobotPy',
@@ -15,8 +15,8 @@ kw = {
     "author": 'WuJunkai',
     "author_email": 'wujunkai20041123@outlook.com',
     "url": 'https://github.com/WuJunkai2004/Dingbot',
-    "download_url": 'https://github.com/WuJunkai2004/Dingbo',
-    "py_modules": ['dingbot'],
+    "download_url": 'https://github.com/WuJunkai2004/Dingbot',
+    'packages':['dingbot'],
     "classifiers": [
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',

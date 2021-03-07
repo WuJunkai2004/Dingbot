@@ -18,19 +18,9 @@ request = _u.Request
 user = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Mobile Safari/537.36'
 head = {'User-Agent': user}
 
-def _http_manage(url,data,headers):
-    'Responsible for network access'
-    text = urlopen(request(url,data,headers)).read()
-    text = text.decode('utf-8') if(sys.version_info.major==3)else text
-    return text
-
-def _http_get(url,headers):
-    'Inherited from _http_manage and responsible for network get'
-    return _http_manage(url,None,headers)
-
-def _http_post(url,data,headers):
-    'Inherited from _http_manage and responsible for network get'
-    return _http_manage(url,data,headers)
+from __init__ import _http_manage
+from __init__ import _http_post
+from __init__ import _http_get
 
 def _search(reg, string):
     try:

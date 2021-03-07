@@ -3,7 +3,7 @@
 # * A SDK for group robots of Dingtalk ( copyright )
 # * Wu Junkai wrote it by python 3.7.7 , run in python 2.7.14 , 3.8.1 and 3.8.7
 
-__version__ = '3.60.0'
+__version__ = '3.61.0'
 __all__ = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
 
 try:
