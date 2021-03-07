@@ -8,7 +8,7 @@ except:
     readme = open('README.md',encoding='utf-8').read()
 
 kw = {
-    "name": 'Dingbot',
+    "name": 'DingRobotPy',
     "version": dingbot.__version__,
     "description": 'Dingtalk group\'s robot API Python SDK',
     "long_description": readme,
@@ -21,7 +21,7 @@ kw = {
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'License :: MIT',
+        'License :: MIT License (MIT License)',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Internet',
