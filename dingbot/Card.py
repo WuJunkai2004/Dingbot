@@ -1,12 +1,7 @@
 # coding=utf-8
 
 __version__ = '0.01.0'
-__all__ = []
-
-try:
-    import urllib2 as _u
-except ImportError:
-    import urllib.request as _u
+__all__ = ['BaseCard', 'FeedCard', 'ImageCard', 'ItemCard', 'LinkCard']
 
 import json
 import re
@@ -26,38 +21,44 @@ def _search(reg, string):
     try:
         return re.search(reg, string).group()
     except BaseException as e:
-        return str(e)
+        raise RuntimeWarm
+        return ''
+    
+class attr:
+    def __init__(self, name, must):
+        self.name = name
+        self.must = must
 
-def NewCard(msg):
-    if  (msg.lower() == 'link'):
-        return LinkCard
-    elif(msg.lower() == 'markdown'):
-        return MarkCard()
-    elif(msg.lower() == 'action'):
-        return ActionCard()
-    elif(msg.lower() == 'feed'):
-        return FeedCard()
-    raise AttributeError(msg)
+    def __str__(self):
+        return self.name
+    
+    def has(self, card):
+        return self.must == false or hasattr(card, self.name)
 
-class BaseCard(dict):
-    __leng__ = 0
-    __attr__ = []
-    __must__ = []
-    def __call__(self):
-        if(not self.check()):
-            return 
-        data = [ ( item, getattr(self,item) ) for item in self.__attr__ ]
+class BaseCard:
+    __all__ = []
+    __type__ = 'text'
+    def data(self):
+        if(not self.if_full()):
+            self.auto()
+            return self.data()
+        data = [ (item, getattr(self,item) ) for item in self.__all__ ]
         data = dict(data)
         return data
 
-    def check(self):
-        have = [ self.__must__[item] == False or hasattr( self, self.__attr__[item] ) for item in range(self.__leng__) ]
+    def is_full(self):
+        have = [ item.has(self) for item in self.__all__ ]
         return False not in have
+    
+    def auto(self):
+        raise RuntimeError
+        
+    def sent(self, api):
+        method = getattr(api, self.__type__)
+        return method(**self.data())
 
 class LinkCard(BaseCard):
-    __leng__ = 4
-    __attr__ = ['text', 'title', 'messageURL', 'picURL']
-    __must__ = [True  , True   , True        , False   ]
+    __all__ = [attr('text', True), attr('title', True), attr('messageURL', True), attr('picURL', False)]
     def auto(self):
         if(not hasattr(self,'messageURL')):
             raise AttributeError
@@ -72,3 +73,12 @@ class LinkCard(BaseCard):
         self.picURL = image
         ## text
         self.text = self.messageURL
+
+class ImageCard(BaseCard):
+    pass
+
+class ItemCard(baseCard):
+    pass
+
+class ReedCard(BaseCard):
+    pass
