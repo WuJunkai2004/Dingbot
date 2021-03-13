@@ -1,12 +1,14 @@
 # coding=utf-8
 
-from os import system as call
+import dingbot
+import io
+import os
+
 import sys
 
-help=u'''钉钉机器人的命令行接口
-支持部分cmd语法
+help=u'''钉钉机器人的命令行程序
+! 本程序已过时，将在 dingbot.Card 完成后重写
 
-语法:
 dingbot [string]
 dingbot -del [robot|/a]
 dingbot -help
@@ -29,8 +31,6 @@ dingbot [-n robot] -pic pics
      /HOOK 构建机器人，可指定名称和密钥。若指定名称，则保存此机器人的设置
   /K /KEY  指定密钥
   /L /LIST 机器人名单
-     /UP   更新代码
-     /USE  使用模块
 
 更多帮助,请访问 https://github.com/WuJunkai2004/Dingbot'''
 
@@ -47,7 +47,6 @@ goto:main'''
 attr=sys.argv[1:] #外部命令
 argv={            #内部命令
     'name':'',
-    'use':'dingbot',
     'at':[]
     }
 recode={          #状态码
@@ -56,22 +55,14 @@ recode={          #状态码
     }
 
 if(not attr):     #若直接启动
-    try:
-        open('Dingbot.bat','r').close()
-    except IOError:
+    if( not io.path.isfile('Dingbot.bat') ):
         fout=open('Dingbot.bat','w')
         fout.write(cmd)
         fout.close()
-    call('Dingbot.bat')
+    os.system('Dingbot.bat')
     sys.exit()
-
-try:              #读取配置
-    fin=open('config.json','r')
-except IOError:
-    config={"names":[],"robot":[]}
-else:
-    config=eval(fin.read())
-    fin.close()
+                  #读取配置
+config = dingbot._configure_manage()
 
                   #遍历命令
 for i in range(len(attr)):
@@ -91,7 +82,7 @@ for i in range(len(attr)):
         elif(code in ('k','key')):       #获取密匙
             argv['key']=attr[i+1]
         elif(code in ('l','list')):     #列表机器人
-            print('\n'.join(config['names']))
+            print('\n'.join(config.data[u'names']))
             sys.exit()
         elif(code in ('n','name')):     #指定名称
             argv['name']=attr[i+1]
@@ -101,52 +92,53 @@ for i in range(len(attr)):
             argv['text']=attr[i+1]
         elif(code in ('u','url')):      #发送链接
             argv['url']=attr[i+1]
-        elif(ocde ==      'up'):
-            argv['update']=True
-        elif(code ==      'use'):
-            argv['use']=attr[i+1]
         else:
             recode['errmsg']='%s is not an option'%(code)
 
                   #检查可用与否
-if(not argv['name'] and not config['names'] and not argv['hook']):
+if(not argv['name'] and not config.data[u'names'] and not argv['hook']):
     recode['errmsg']='you are not having any dingbot now'
     print(recode)
     sys.exit()
 
-sys.path.append('supports')
-exec('from %s import DingPlus'%(argv['use']))
-
                   #配置机器人
+robot = dingbot.DingManage()
 if  (not argv['name']):
     if  ('hook' in argv.keys()):
-        robot=DingPlus(argv['hook'],argv['key'])
+        robot.login(argv['hook'],argv['key'])
     else:
-        robot=DingPlus(config['names'][0])
+        robot.name = config.data[u'names'][0]
+        robot.login()
 else:
     if  ('hook' in argv.keys()):
-        robot=DingPlus(argv['hook'],argv['key'])
-        robot.save(argv['name'])
+        robot.login(argv['hook'],argv['key'])
+        robot.name=argv['name']
+        robot.remember()
         recode['errcode']=200
         recode['errmsg'] ='load robot %s successfully'%(argv['name'])
     else:
-        robot=dingbot.DingPlus(argv['names'])
+        robot.name = argv['names']
+        robot.login()
+        
+api = robot.api
 
 if(len(attr)==1): #快捷发送
-    recode=robot.share(attr[0].decode('gbk'))
+    recode = api.text(content = attr[0].decode('gbk'))
 
                   #分析命令
 if  ('text' in argv.keys()):
-    recode=robot.text(argv['text'],argv['at'])
+    recode=api.text(content = argv['text'],argv['at'])
 elif('url'  in argv.keys() and 'pic' in argv.keys()):
+    raise RuntimeError
     recode=robot.card.independent(u'链接','![](%s)'%(argv['pic']),argv['url'])
 elif('url'  in argv.keys()):
+    raise RuntimeError
     recode=robot.share(argv['url'])
 elif('pic'  in argv.keys()):
     recode=robot.markdown(u'图片','![](%s)'%(argv['pic']),argv['at'])
 elif('del'  in argv.keys()):
     if(argv['at']==all):
-        config={"names":[],"robot":[]}
+        config.data={"names":[],"robot":[]}
         recode['errcode']=200
         recode['errmsg'] ='delete all of dingbots successfully'
     elif(attr[i+1] in config['names']):
@@ -157,11 +149,6 @@ elif('del'  in argv.keys()):
         recode['errmsg'] ='delete dingbot %s successfully'%(attr[i+1])
     else:
         recode['errmsg'] ='can not find the robot %s'%(attr[i+1])
-    fout=open('config.json','w')
-    fout.write(dingbot.json(config))
-    fout.close()
-elif('update' in argv.keys()):
-    from dingbot import update
-    update()
+    config.save()
 
 print(recode)
