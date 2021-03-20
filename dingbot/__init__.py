@@ -59,7 +59,7 @@ class _configure_manage:
             with open(self.path, 'r') as fin:
                 self.data = json.load(fin)
         except IOError:
-            self.data = {u'names':[], u'robot':[]}
+            self.data = {}
 
     def save(self):
         with open(self.path, 'w') as fout:
@@ -67,39 +67,31 @@ class _configure_manage:
 
 class _dingtalk_robot_manage:
     'dingtalk robot manage , inherited from _dingbot_robot_signature'
-    __all__ = ['conf', 'delete', 'is_login', 'login', 'name', 'remember', 'webhook']
+    __all__ = ['conf', 'delete', 'login', 'name', 'remember', 'secret', 'webhook']
     def __init__(self, name = None):
         self.conf     = _configure_manage()
         self.name     = name
-        if(self.name in self.conf.data[u'names']):
+        if(self.name in self.conf.data.keys()):
             self.login()
 
-    def login(self,webhook=None,secret=None):
+    def login(self, webhook = None, secret = None):
         self.webhook  = webhook
         self.secret   = secret
-        if(self.name in self.conf.data[u'names']):
-            index=self.conf.data[u'names'].index(self.name)
-            self.webhook = self.conf.data[u'robot'][index][u'webhook']
-            self.secret  = self.conf.data[u'robot'][index][u'secret']
+        if(self.name in self.conf.data.keys()):
+            self.webhook = self.conf.data[self.name][u'webhook']
+            self.secret  = self.conf.data[self.name][u'secret']
         elif(not webhook):
             raise DingError('The robot need a webhook.')
 
     def remember(self):
-        data={u'name':self.name, u'webhook':self.webhook, u'secret':self.secret}
-        if(self.name in self.conf.data[u'names']):
-            index=self.conf.data[u'names'].index(self.name)
-            self.conf.data[u'robot'][index] = data
-        else:
-            self.conf.data[u'robot'].append(data)
-            self.conf.data[u'names'].append(self.name)
+        data = {u'webhook':self.webhook, u'secret':self.secret}
+        self.conf.data[self.name] = data
         self.conf.save()
 
     def delete(self):
-        if(self.name not in self.conf.data[u'names']):
+        if(self.name not in self.conf.data.keys()):
             raise DingError('{} is not a robot\'s name'.format(self.name))
-        index=self.conf.data[u'names'].index(self.name)
-        del self.conf.data[u'names'][index]
-        del self.conf.data[u'robot'][index]
+        del self.conf.data[self.name]
         self.conf.save()
         self.__init__()
 
@@ -108,11 +100,11 @@ class _dingtalk_robot_manage:
             return _signature(self.webhook, self.secret)
         return self.webhook
 
-    def __getattr__(self,text):
-        if('ding{}'.format(text.lower()) in [i.lower() for i in __all__] and self.webhook):
-            index = [i.lower() for i in __all__].index('ding{}'.format(text.lower()))
+    def __getattr__(self, item):
+        if('ding{}'.format(item.lower()) in [i.lower() for i in __all__] and self.webhook):
+            index = [i.lower() for i in __all__].index('ding{}'.format(item.lower()))
             return eval(__all__[index])(self)
-        raise AttributeError("'_dingtalk_robot_manage' object has no attribute '{}'.".format(text))
+        raise AttributeError("'_dingtalk_robot_manage' object has no attribute '{}'.".format(item))
 
 class _dingtalk_robot_api:
     'dingtalk robot api for sending messages'
