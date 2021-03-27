@@ -1,7 +1,6 @@
 # coding=utf-8
-
+'A SDK for group robots of Dingtalk ( copyright )\nWu Junkai wrote it by python 3.7.7 , run in python 2.7.14, 3.8.1 and 3.8.7\n\nFor more information please view github.com/WuJunkai2004/Dingbot'
 __all__     = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
-__doc__     = 'A SDK for group robots of Dingtalk ( copyright )\nWu Junkai wrote it by python 3.7.7 , run in python 2.7.14, 3.8.1 and 3.8.7\nmore information please view github.com/WuJunkai2004/Dingbot'
 __version__ = '3.62.0'
 
 try:
@@ -19,25 +18,24 @@ import json
 import sys
 import time
 
-urlopen = _u.urlopen
-request = _u.Request
-Card = dict
+def Card(**kw):
+    'item1 = value1, item2 = value2 -> {"item1": value1, "item2": value2}'
+    return kw
 
-def _http_manage(url, data, headers):
-    'Responsible for network access'
-    text = urlopen(request(url, data, headers)).read()
+def _internet_connect(url, data, headers):
+    'url, data, headers -> res'
+    req = _u.Request(url, data, headers)
+    res = _u.urlopen(req)
+    return res
+
+def post(url, data):
+    'post data to the url then get the response'
+    text = _internet_connect(url, data, {'Content-Type': 'application/json'}).read()
     text = text.decode('utf-8') if(sys.version_info.major == 3)else text
     return text
 
-def _http_get(url, headers):
-    'Inherited from _http_manage and responsible for network get'
-    return _http_manage(url, None, headers)
-
-def _http_post(url, data, headers):
-    'Inherited from _http_manage and responsible for network get'
-    return _http_manage(url, data, headers)
-
 def _signature(webhook, secret, var = sys.version_info.major):
+    'signture the url'
     timestamp          = long(round(time.time() * 1000))        if(var==2)else str(round(time.time() * 1000))
     secret_enc         = bytes(secret).encode('utf-8')          if(var==2)else secret.encode('utf-8')
     string_to_sign     = '{}\n{}'.format(timestamp, secret)
@@ -106,9 +104,9 @@ class _dingtalk_robot_manage:
 
 class _dingtalk_robot_api:
     'dingtalk robot api for sending messages'
-    __all__ = ['actionCard', 'at', 'feedCard', 'link', 'markdown', 'text', 'send']
+    __all__ = ['actionCard', 'at', 'feedCard', 'link', 'markdown', 'robot', 'text', 'send']
     def __init__(self, robot):
-        self.__robot__ = robot
+        self.robot     = robot
         self.__api__   = None
         self.__at__    = None
 
@@ -117,11 +115,10 @@ class _dingtalk_robot_api:
         return self.send
 
     def send(self, **kwattr):
-        url     = self.__robot__.url()
-        headers = {'Content-Type': 'application/json'}
+        url     = self.robot.url()
         data    = json.dumps({'at': self.__at__, 'msgtype': self.__api__, self.__api__: kwattr}).encode("utf-8")
-        self.__init__(self.__robot__)
-        return eval( _http_post( url, data, headers ) )
+        self.__init__(self.robot)
+        return eval(post(url, data))
 
     def at(self,**kwattr):
         self.__at__ = kwattr
