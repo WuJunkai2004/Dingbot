@@ -35,7 +35,7 @@ def post(url, data):
     return text
 
 def _signature(webhook, secret, var = sys.version_info.major):
-    'signture the url'
+    'signture the url with the secret'
     timestamp          = long(round(time.time() * 1000))        if(var==2)else str(round(time.time() * 1000))
     secret_enc         = bytes(secret).encode('utf-8')          if(var==2)else secret.encode('utf-8')
     string_to_sign     = '{}\n{}'.format(timestamp, secret)
@@ -45,7 +45,7 @@ def _signature(webhook, secret, var = sys.version_info.major):
     return '{}&timestamp={}&sign={}'.format(webhook, timestamp, sign)
 
 class _configure_manage:
-    'Configuration file read and manage'
+    'manage the Configuration file, use ./config.json as default'
     def __init__(self, path = r'.\config.json'):
         self.path = path
         self.load()
@@ -62,7 +62,7 @@ class _configure_manage:
             json.dump(self.data, fout)
 
 class _dingtalk_robot_manage:
-    'dingtalk robot manage , inherited from _dingbot_robot_signature'
+    'manage dingtalk robot'
     __all__ = ['conf', 'delete', 'login', 'name', 'remember', 'secret', 'webhook']
     def __init__(self, name = None):
         self.conf     = _configure_manage()
@@ -124,31 +124,31 @@ class _dingtalk_robot_api:
         self.__at__ = kwattr
 
 class DingError(RuntimeError):
-    'the Error for dingbot and inherited from RuntimeError'
+    'the Error for dingbot'
 
 class DingManage(_dingtalk_robot_manage):
-    'inherited from _dingtalk_robot_manage'
+    'standard dingtalk robot manager'
 
 class DingAPI(_dingtalk_robot_api):
-    'inherited from _dingtalk_robot_api for sending messages'
+    'standard dingtalk robot API'
 
 class DingRaise(_dingtalk_robot_api):
-    'inherited from _dingtalk_robot_api and raise error while sending messages wrong'
+    'dingtalk robot API which can raise error while sending messages wrongly'
     def send(self, **kwattr):
-        remsg=_dingtalk_robot_api.send(self, **kwattr)
+        remsg = _dingtalk_robot_api.send(self, **kwattr)
         if(remsg['errcode']):
             raise DingError('[Error {}]: {}'.format(remsg['errcode'], remsg['errmsg']))
         return remsg
 
 class DingLimit(_dingtalk_robot_api):
     'inherited from _dingtalk_robot_api for sending while you are in the time limited'
-    __his__={}
+    __his__ = {}
     def __contains__(self,value):
-        if(self.__robot__.webhook not in self.__his__.keys()):
-            self.__his__[self.__robot__.webhook] = [0] * 20
-        return (value - self.__his__[self.__robot__.webhook][0] <= 60 )
+        if(self.robot.webhook not in self.__his__.keys()):
+            self.__his__[self.robot.webhook] = [0] * 20
+        return (value - self.__his__[self.robot.webhook][0] <= 60 )
 
     def send(self,**kwattr):
         if(time.time() not in self):
-            self.__his__[self.__robot__.webhook] = self.__his__[self.__robot__.webhook][1:] + [ time.time() ]
-            return _dingtalk_robot_api.send(self, **kwattr)
+            self.__his__[self.robot.webhook] = self.__his__[self.robot.webhook][1:] + [ time.time() ]
+            return _dingtalk_robot_api.send(self, **kwattrk)
