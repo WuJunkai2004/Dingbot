@@ -137,7 +137,7 @@ class DingRaise(_dingtalk_robot_api):
     def send(self, **kwattr):
         remsg = _dingtalk_robot_api.send(self, **kwattr)
         if(remsg['errcode']):
-            raise DingError('[Error {}]: {}'.format(remsg['errcode'], remsg['errmsg']))
+            raise DingError('Error code {} : {}'.format(remsg['errcode'], remsg['errmsg']))
         return remsg
 
 class DingLimit(_dingtalk_robot_api):
