@@ -6,94 +6,72 @@ import os
 
 import sys
 
-help=u'''钉钉机器人的命令行程序
-! 本程序已过时，将在 dingbot.Card 完成后重写
+help=u'''钉钉机器人的命令行支持
 
-dingbot [string]
-dingbot -del [robot|/a]
-dingbot -help
-dingbot -list
-dingbot [-n robot]
-dingbot [-n robot] -hook webhook [-key secret]
-dingbot [-n robot] -url urls
-dingbot [-n robot] -pic pics
+dingbot -init
+dingbot -setup name webhook [secret]
+dingbot -robot login/logout name1 [name2...]
+dingbot -list [all/using]
+  钉钉机器人的管理模块
+  -init         初始化机器人的所有参数，清除载入的机器人
+  -setup        安装一个钉钉机器人，用于后续操作
+  -robot        载入或者移除机器人，可以同时指定多个。
+                当使用发送模块的时候，所有被载入的机器人都会同步发送消息。
+  -list         列出所有安装或者载入的机器人
 
-发送模式:
-  /N /NAME 指定所操作的机器人
-  /P /PIC  分享图片
-  /T /TEXT 发送文本，可与/PIC连用
-  /U /URL  分享链接，可与/PIC连用
+dingbot -text content
+dingbot -image file-path
+dingbot -link url
+  钉钉机器人的发送模块
+  
 
-管理模式:
-  /A /ALL  @所有人或删除所有机器人，仅可与/TEXT或/DEL连用
-  /D /DEL  删除机器人
-  /H /HELP 获取帮助
-     /HOOK 构建机器人，可指定名称和密钥。若指定名称，则保存此机器人的设置
-  /K /KEY  指定密钥
-  /L /LIST 机器人名单
 
 更多帮助,请访问 https://github.com/WuJunkai2004/Dingbot'''
 
-cmd=r'''@echo off
-echo Dingbot By WuJunkai - 2.00.0
-echo more help please view https://github.com/WuJunkai2004/Dingbot
-:main
-    set "cmd="
-    set /P cmd=^>^>^>
-    if "%cmd%"=="" goto:main
-    if /I "%cmd:~0,7%"=="Dingbot" (line.py%cmd:~7%) else (%cmd%)
-goto:main'''
-
 attr=sys.argv[1:] #外部命令
-argv={            #内部命令
-    'name':'',
-    'at':[]
-    }
+argv={}           #内部命令
 recode={          #状态码
     'errcode':405,
     'errmsg':'wrong'
     }
-
-if(not attr):     #若直接启动
-    if( not io.path.isfile('Dingbot.bat') ):
-        fout=open('Dingbot.bat','w')
-        fout.write(cmd)
-        fout.close()
-    os.system('Dingbot.bat')
-    sys.exit()
                   #读取配置
 config = dingbot._configure_manage()
 
-                  #遍历命令
-for i in range(len(attr)):
-    if(attr[i][0] in (r'/','-')):
-        code=attr[i].lower()[1:]
-        if  (code in ('a','all')):      #@all
-            argv['at']=all
-        elif(code in ('d','del')):      #删除机器人
-            argv['del']=attr[i+1]
-        elif(code in ('h','help','?')): #帮助
-            print(help)
-            sys.exit()
-        elif(code ==      'hook'):      #配置机器人
-            argv['hook']=attr[i+1]
-            if('key' not in argv.keys()):
-                argv['key']=''
-        elif(code in ('k','key')):       #获取密匙
-            argv['key']=attr[i+1]
-        elif(code in ('l','list')):     #列表机器人
-            print('\n'.join(config.data[u'names']))
-            sys.exit()
-        elif(code in ('n','name')):     #指定名称
-            argv['name']=attr[i+1]
-        elif(code in ('p','pic')):      #发送带图片的消息
-            argv['pic']=attr[i+1]
-        elif(code in ('t','text')):     #发送文本消息
-            argv['text']=attr[i+1]
-        elif(code in ('u','url')):      #发送链接
-            argv['url']=attr[i+1]
-        else:
-            recode['errmsg']='%s is not an option'%(code)
+class cmd:
+    def __init__(self, opt):
+        '初始化'
+        self.argv = {}
+        self.attr = opt
+        
+        self.robots = []
+        
+        self.option()
+        self.load()
+    
+    def option(self):
+        '遍历命令，并转化'
+        for item in self.attr:
+            if(item[0] in r'\/-'):
+                sets = item[1:]
+                self.argv[ sets.lower() ] = []
+            else:
+                self.argv[ sets.lower() ].append( item )
+        self._synonym_option()
+    
+    def _synonym_option(self):
+        maps = {
+        #   短名：长名
+            '?' : 'help'
+        }
+        for name in self.argv.keys():
+            if(name in maps.keys()):
+                self.argv[ maps[name] ] = self.argv[name]
+                
+    def load(self):
+        pass
+                
+    def _load_congif(self, path=r'.\dingbot_cli.ini'):
+        pass
 
                   #检查可用与否
 if(not argv['name'] and not config.data[u'names'] and not argv['hook']):
