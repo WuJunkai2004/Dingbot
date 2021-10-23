@@ -1,7 +1,7 @@
 # coding=utf-8
 'A SDK for group robots of Dingtalk ( copyright )\nWu Junkai wrote it by python 3.7.7 , run in python 2.7.14, 3.8.1 and 3.8.7\n\nFor more information please view github.com/WuJunkai2004/Dingbot'
 __all__     = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
-__version__ = '3.62.0'
+__version__ = '3.63.0'
 
 try:
     import urllib2 as _u
@@ -151,4 +151,4 @@ class DingLimit(_dingtalk_robot_api):
     def send(self,**kwattr):
         if(time.time() not in self):
             self.__his__[self.robot.webhook] = self.__his__[self.robot.webhook][1:] + [ time.time() ]
-            return _dingtalk_robot_api.send(self, **kwattrk)
+            return _dingtalk_robot_api.send(self, **kwattr)
