@@ -32,6 +32,9 @@ try:
 
     setup(**kw)
 except:
+    pass
+
+try:
     kw = {
         "name": 'Dingbot',
         "version": dingbot.__version__,
@@ -55,3 +58,5 @@ except:
     }
 
     setup(**kw)
+except:
+    pass
