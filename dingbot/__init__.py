@@ -1,14 +1,14 @@
 # coding=utf-8
 'A SDK for group robots of Dingtalk ( copyright )\nWu Junkai wrote it by python 3.7.7 , run in python 2.7.14, 3.8.1 and 3.8.7\n\nFor more information please view github.com/WuJunkai2004/Dingbot'
-__all__     = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingManage', 'DingRaise']
+__all__     = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingRaise', 'Manage']
 __version__ = '3.63.0'
 
 try:
     import urllib2 as _u
-    from urllib import quote_plus
+    from urllib import quote_plus as _quote_plus
 except ImportError:
     import urllib.request as _u
-    from urllib.parse import quote_plus
+    from urllib.parse import quote_plus as _quote_plus
 
 import base64
 import hashlib
@@ -41,13 +41,18 @@ def _signature(webhook, secret, var = sys.version_info.major):
     string_to_sign     = '{}\n{}'.format(timestamp, secret)
     string_to_sign_enc = bytes(string_to_sign).encode('utf-8')  if(var==2)else string_to_sign.encode('utf-8')
     hmac_code          = hmac.new(secret_enc, string_to_sign_enc, digestmod=hashlib.sha256).digest()
-    sign               = quote_plus(base64.b64encode(hmac_code))
+    sign               = _quote_plus(base64.b64encode(hmac_code))
     return '{}&timestamp={}&sign={}'.format(webhook, timestamp, sign)
 
 class _configure_manage:
-    'manage the Configuration file, use ./config.json as default'
-    def __init__(self, path = r'.\config.json'):
-        self.path = path
+    'manage the Configuration file'
+    __path__ = None
+    __inst__ = {}
+    def __init__(self, path = None):
+        if(path):
+            self.path = path
+        else:
+            self.path = self.__path__
         self.load()
 
     def load(self):
@@ -55,17 +60,23 @@ class _configure_manage:
             with open(self.path, 'r') as fin:
                 self.data = json.load(fin)
         except IOError:
-            self.data = {}
+            self.data = self.__inst__
 
     def save(self):
         with open(self.path, 'w') as fout:
             json.dump(self.data, fout)
 
+
+class config(_configure_manage):
+    __path__ = r'.\config.json'
+    __inst__ = {}
+
+
 class _dingtalk_robot_manage:
     'manage dingtalk robot'
     __all__ = ['conf', 'delete', 'login', 'name', 'remember', 'secret', 'webhook']
     def __init__(self, name = None):
-        self.conf     = _configure_manage()
+        self.conf     = config()
         self.name     = name
         if(self.name in self.conf.data.keys()):
             self.login()
@@ -126,7 +137,7 @@ class _dingtalk_robot_api:
 class DingError(RuntimeError):
     'the Error for dingbot'
 
-class DingManage(_dingtalk_robot_manage):
+class Manage(_dingtalk_robot_manage):
     'standard dingtalk robot manager'
 
 class DingAPI(_dingtalk_robot_api):

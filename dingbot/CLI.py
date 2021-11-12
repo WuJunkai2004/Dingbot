@@ -1,13 +1,9 @@
 # coding=utf-8
 
 import dingbot
-import io
-import json
-
-import os
 import sys
 
-help=u'''钉钉机器人的命令行支持
+help=u'''钉钉机器人的命令行支持。
 
 dingbot -init
 dingbot -setup name webhook [secret]
@@ -30,22 +26,16 @@ dingbot -link url
 
 更多帮助,请访问 https://github.com/WuJunkai2004/Dingbot'''
 
-class config:
-    def __init__(self, path=r'.\dingbot_cli.ini'):
-        self.path = path
-        fin = open(path)
-        self.data = json.load(fin)
-        fin.close()
-    
-    def __getattr__(self, name):
-        return self.data[name]
-    
-    def for_each():
+class config(dingbot._configure_manage):
+    __path__ = r'.\dingbot_cli.ini' 
+    __inst__ = {u'robot':[]}
+
+    def for_each(self):
         for robot in self.data[u'robot']:
             yield dingbot.DingAPI( dingbot.DingManage(robot) )
 
 
-bot_config = dingbot._config_manage()
+bot_config = dingbot.config()
 cli_config = config()
 
 class cmd:
@@ -69,16 +59,18 @@ class cmd:
         self._synonym_option()
     
     def _synonym_option(self):
+        keys = list(self.argv.keys())
         maps = {
         #   短名：长名
             '?' : 'help',
+            'h' : 'help',
             't' : 'text',
             'i' : 'init',
             's' : 'setup',
             'r' : 'robot',
             'l' : 'list'
         }
-        for name in self.argv.keys():
+        for name in keys:
             if(name in maps.keys()):
                 self.argv[ maps[name] ] = self.argv[name]
 
@@ -86,6 +78,7 @@ class cmd:
         handle(self.argv)
        
 class handle:
+    __all__ = ['_help','_init','_setup','_robot','_list' ]
     def __init__(self, argv):
         for act in argv.keys():
             if('_{}'.format(act) in self.__all__):
@@ -97,7 +90,8 @@ class handle:
         print(help)
     
     def _init(self,para):
-        raise None
+        cli_config.data = {u'robot':None}
+        cli_config.save()
         
     def _setup(self,para):
         para += [None]
@@ -107,11 +101,19 @@ class handle:
         
     def _robot(self,para):
         if  (para[0].lower() == 'login' ):
-            raise None
+            cli_config.data[u'robot'] += para[1:]
         elif(para[0].lower() == 'logout' ):
-            raise None
+            for item in para[1:]:
+                cli_config.data[u'robot'].remove(item)
         else:
             raise RuntimeError
     
     def _list(self,para):
         para += ['all']
+        if( para[0] == 'all' ):
+            print('\n'.join(bot_config.data.keys()))
+        if( para[0] == 'using' ):
+            print('\n'.join(cli_config.data[u'robot']))
+
+
+c = cmd(sys.argv[1:])

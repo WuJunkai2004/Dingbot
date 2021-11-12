@@ -3,12 +3,14 @@
 __version__ = '0.01.0'
 __all__ = ['BaseCard', 'FeedCard', 'ImageCard', 'ItemCard', 'LinkCard']
 
+import dingbot
+
 import json
 import re
 import sys
 
-urlopen = _u.urlopen
-request = _u.Request
+urlopen = dingbot._u.urlopen
+request = dingbot._u.Request
 
 user = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Mobile Safari/537.36'
 head = {'User-Agent': user}
