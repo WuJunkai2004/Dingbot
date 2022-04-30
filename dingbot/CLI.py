@@ -46,7 +46,7 @@ class cmd:
         
         self.option()
         
-        self.action()
+        handle(self.argv)
     
     def option(self):
         '遍历命令，并转化'
@@ -59,9 +59,9 @@ class cmd:
         self._synonym_option()
     
     def _synonym_option(self):
+        '将短名转化为可识别的长名'
         keys = list(self.argv.keys())
         maps = {
-        #   短名：长名
             '?' : 'help',
             'h' : 'help',
             't' : 'text',
@@ -73,9 +73,7 @@ class cmd:
         for name in keys:
             if(name in maps.keys()):
                 self.argv[ maps[name] ] = self.argv[name]
-
-    def action(self):
-        handle(self.argv)
+        
        
 class handle:
     __all__ = ['_help','_init','_setup','_robot','_list' ]
@@ -90,16 +88,19 @@ class handle:
         print(help)
     
     def _init(self,para):
+        '初始化'
         cli_config.data = {u'robot':None}
         cli_config.save()
         
     def _setup(self,para):
+        '登记新的机器人'
         para += [None]
         robot = dingbot.Manage(para[0])
         robot.login(para[1],para[2])
         robot.remember()
         
     def _robot(self,para):
+        '登入或登出机器人'
         if  (para[0].lower() == 'login' ):
             cli_config.data[u'robot'] += para[1:]
         elif(para[0].lower() == 'logout' ):
@@ -116,4 +117,33 @@ class handle:
             print('\n'.join(cli_config.data[u'robot']))
 
 
-c = cmd(sys.argv[1:])
+def install():
+    import re
+    import os
+    comm = os.getcwd() + '\\' + 'CLI.py'
+    batc = '@echo off&{} %1 %2 %3 %4 %5 %6 %7 %8 %9'.format(comm)
+    path = os.environ.get("PATH").split(";")
+    file = None
+    for item in path:
+        if(re.search('python',item,re.I)):
+           file = item + 'dingbot.bat'
+           break
+    else:
+        file = 'C:\\WINDOWS\\system32' + 'dingbot.bat'
+
+    try:
+        if(not os.path.exists(file)):
+            fin = open(file,'w+')
+            fin.write(batc)
+            fin.close()
+        os.system('cmd')
+    except:
+        print('Please open with administrator privileges')
+        
+
+
+if(not sys.argv[1:]):
+    install()
+
+else:
+    c = cmd(sys.argv[1:])
