@@ -15,11 +15,12 @@ pip install DingRobotPy
 #### 即将提供的功能
 - [ ] 完整的`dingbot.Card`，可对网页、图片、文件进行自动提取内容   
 - [ ] 全新的`dingbot.CLI`可在命令行进行大部分操作功能
-- [ ] `dingbot.GUI`库，可GUI下完成所有操作*更新中）
+- [ ] `dingbot.GUI`库，可GUI下完成所有操作(更新中)
 ## 作者
 由 [吴君凯](mailto:wujunkai20041123@outlook.com) 建立框架。  
 由 [吴君明](mailto:2706914036@qq.com) 负责漏洞修复与后续支持。
 ## [使用方法](https://github.com/WuJunkai2004/Dingbot/blob/master/document/method.md)
+## [命令行帮助](https://github.com/WuJunkai2004/Dingbot/blob/master/document/command.md)
 ## [代码原理](https://github.com/WuJunkai2004/Dingbot/blob/master/document/wiki.md)
 ## 参考
 [钉钉支持文档](https://ding-doc.dingtalk.com/doc#/serverapi2/qf2nxq)。
