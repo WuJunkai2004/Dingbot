@@ -121,9 +121,11 @@ class _dingtalk_robot_api:
         self.__api__   = None
         self.__at__    = None
 
-    def __getattr__(self, mothed):
-        self.__api__ = mothed
-        return self.send
+    def __getattr__(self, method):
+        if method in self.__all__:
+            self.__api__ = method
+            return self.send
+        super().__getattribute__()
 
     def send(self, **kwattr):
         url     = self.robot.url()
