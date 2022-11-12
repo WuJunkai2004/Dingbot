@@ -1,13 +1,14 @@
 ## 使用方法
-　　对于部分函数或类的名称，可能有轻微改动使其不适用本文档的演示。
+对于部分函数或类的名称，可能有轻微改动使其不适用本文档的演示。  
+对于命令行，请参见(命令行帮助)[]
 ### Step Zero
-　　需要提前在钉钉群内注册一个自定义机器人。并下载Dingbot  
+需要提前在钉钉群内注册一个自定义机器人。并下载Dingbot  
 ```
 pip install DingRobotPy
 ```
 ### DingManage
-　　`DingManage`是`_dingtalk_robot_manage`的接口，提供了非常方便的方法来[管理并调用机器人](#管理群机器人)。   
-　　调用`login()`登记机器人。  
+`DingManage`是`_dingtalk_robot_manage`的接口，提供了非常方便的方法来[管理并调用机器人](#管理群机器人)。   
+调用`login()`登记机器人。  
 ```python
 # 导入
 import dingbot
@@ -25,8 +26,7 @@ revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 # 检查返回值
 print(revalue)
 ```
-　　但是由于安全设置，不推荐上述写法。
-　　推荐使用`加签`发送，可以适应大部分应用场景，同时保证数据的安全。  
+推荐使用`加签`发送，可以适应大部分应用场景，同时保证数据的安全。  
 ```python
 import dingbot
 
@@ -40,8 +40,8 @@ revalue=robot.api.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
 ```
 ### DingAPI
-　　上面的例子里，发送消息时调用`dingbot.DingManage.api`。  
-　　同时，也可以选择调用`dingbot.DingAPI`达到同样的效果。  
+上面的例子里，发送消息时调用`dingbot.DingManage.api`。  
+也可以选择调用`dingbot.DingAPI`达到同样的效果。  
 ```python
 import dingbot
 
@@ -52,12 +52,12 @@ revalue=core.text(content=u'我就是我, 是不一样的烟火')
 print(revalue)
 ```
 ### DingRaise
-　　发送消息后，无论是否成功，都会得到一个为json类型的返回值。若调用成功，为
+发送消息后，无论是否成功，都会得到一个为json类型的返回值。若调用成功，为
 ```json
 {"errcode": 0, "errmsg": "ok"}
 ```
-　　`dingbot`提供了`DingRaise`的方法来自动检查返回值，并在异常时抛出`dingbot.DingError`。  
-　　可以通过`dingbot.DingManage.Raise`快速调用本方法。
+`dingbot`提供了`DingRaise`的方法来自动检查返回值，并在异常时抛出`dingbot.DingError`。  
+通过`dingbot.DingManage.Raise`快速调用本方法。
 ```python
 import dingbot
 
@@ -67,12 +67,14 @@ try:
     core.text(content=u'我就是我, 是不一样的烟火')
 except dingbot.DingError as e:
     print(e)
+else:
+    print('发送成功')
 ```
 ### DingLimit
-　　钉钉机器人消息发送频率限制为每分钟20条。若大量连续发送会被限流10分钟。  
-　　为了防止超出发送频率限制，`Dingbot`提供了`dingbot.DingLimit`来控制发送频率。  
-　　当未超过频率限制时，则正常返回返回值。若即将超过，则停止发送并返回空值。  
-　　可以通过`dingbot.DingManage.limit`快速调用本方法。
+钉钉机器人消息发送频率限制为每分钟20条。若大量连续发送会被限流10分钟。  
+为了防止超出发送频率限制，`Dingbot`提供了`dingbot.DingLimit`来控制发送频率。  
+当未超过频率限制时，则正常返回返回值。若即将超过，则停止发送并返回空值。  
+通过`dingbot.DingManage.limit`快速调用本方法。
 ```python
 import dingbot,time
 
@@ -82,9 +84,9 @@ while(not core.text(content=u'我就是我, 是不一样的烟火') ):
     time.sleep(1)
 ```
 ### api的调用方式
-　　钉钉机器人提供了5种不同的信息类型，分别为[text](#text)，[link](#link)，[markdown](#markdown)，[ActionCard](#ActionCard)，[FeedCard](#FeedCard)。  
-　　卡片类型的消息可以调用`dingbot.Card`。  
-　　若无特殊说明，字符串的编码均为`UTF-8`。参数对大小写敏感。
+钉钉机器人提供了5种不同的信息类型，分别为[text](#text)，[link](#link)，[markdown](#markdown)，[ActionCard](#ActionCard)，[FeedCard](#FeedCard)。  
+卡片类型的消息可以调用`dingbot.Card`构建。  
+若无特殊说明，字符串的编码均为`UTF-8`。参数对大小写敏感。
 #### text
 ```python
 # demo
@@ -156,8 +158,8 @@ text | str | YES | markdown格式的消息
 ```
 
 #### ActionCard
-　　ActionCard有两种，分别为整体跳转ActionCard类型和独立跳转ActionCard类型。  
-　　两种不同的类型共用一个相同的接口，由传入的参数决定具体的消息类型。
+ActionCard有两种，分别为整体跳转ActionCard类型和独立跳转ActionCard类型。  
+两种不同的类型共用一个相同的接口，由传入的参数决定具体的消息类型。
 ##### 整体跳转ActionCard
 ```python
 # demo
@@ -233,10 +235,10 @@ messageURL | str | YES | 点击单条信息到跳转链接
 picURL | str | YES | 单条信息后面图片的URL
 
 ### 使用@
-　　`dingbot`使用`@`的时需调用 `at()` 方法，指定被@的对象。  
-　　每次发送完信息，`at()`的数据就会重置，需要再次调用 `at()` 方法。  
-　　`dingbot.DingManage.api`由于其构建方法，不能使用`@`。  
-　　如果在消息里没有指定`@`的位置，会默认加到消息末尾。  
+`dingbot`使用`@`的时需调用 `at()` 方法，指定被@的对象。  
+每次发送完信息，`at()`的数据就会重置，需要再次调用 `at()` 方法。  
+`dingbot.DingManage.api`由于其构建方法，不能使用`@`。  
+如果在消息里没有指定`@`的位置，会默认加到消息末尾。  
 ```python
 # demo
 api=dingbot.DingAPI(robot)
@@ -251,7 +253,7 @@ api.text(content=u'我就是我, 是不一样的烟火@150XXXXXXXX')
 | isAtAll | bool | 是否@所有人 |
 
 ### 管理群机器人
-　　为了方便调用不同的机器人，dingbot提供了一种仅需要名字的登陆方法。但同时会在本地以明码保存`webhook`和`secret`。
+为了方便调用不同的机器人，dingbot提供了一种仅需要名字的登陆方法。但同时会在本地以明码保存`webhook`和`secret`。
 ```python
 # 保存一个机器人，名字为bluebird（可自行更改）
 import dingbot
@@ -263,16 +265,16 @@ robot=dingbot.DingManage('bluebird')    # 名称在此处传入
 robot.login(webhook,secret)
 robot.remember()
 ```
-　　现在，你应该可以在本地发现一个`config.json`的文件，里面储存了 bluebird 的数据。  
-　　`config.json`可存储同时多个机器人的数据，但需要保证机器人的名字各不相同。  
-　　如需更改webhook或secret，可以重新调用login()方法，也可以直接对机器人的变量进行赋值。
+现在，你应该可以在本地发现一个`config.json`的文件，里面储存了 bluebird 的数据。  
+`config.json`可存储同时多个机器人的数据，但需要保证机器人的名字各不相同。  
+如需更改webhook或secret，可以重新调用login()方法，也可以直接对机器人的变量进行赋值。
 ```python
 # 调用 bluebird
 robot=dingbot.DingManage('bluebird')
 # 这里不需要再次调用`login()`
 robot.api.text(content=u'我就是我, 是不一样的烟火')
 ```
-　　当然，也可以删除机器人。
+当然，也可以删除机器人。
 ```pyhton
 robot=dingbot.DingManage('bluebird'）
 robot.delete()

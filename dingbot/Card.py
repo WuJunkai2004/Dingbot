@@ -1,17 +1,15 @@
 # coding=utf-8
 
 __version__ = '0.01.0'
-__all__ = ['BaseCard', 'FeedCard', 'FileCard', 'ImageCard', 'ItemCard', 'LinkCard']
+__all__ = ['BaseCard', 'FeedCard', 'ImageCard', 'ItemCard', 'LinkCard']
 
 try:
     from dingbot  import _internet_connect
 except ImportError:
     from __init__ import _internet_connect
 
-import json
 import mimetypes
 import re
-
 import sys
 import time
 
@@ -41,29 +39,6 @@ def _get(url, headers):
     return text
 
 
-def _type(url):
-    n = url.rfind('.')
-    if n == -1:
-        return 'application/octet-stream'
-    ext = url[n:]
-    return mimetypes.types_map.get(ext, 'application/octet-stream')
-
-
-def _file(path):
-    boundary = '----------%s' % hex(int(time.time() * 1000))
-    with open(path) as fin:
-        content  = fin.read()
-        filename = getattr(fin, 'name', '')
-    data = [
-        '--{}'.format(boundary),
-        'Content-Disposition: form-data; name="file"; filename="{}"'.format(path),
-        'Content-Length: {}' .format( len(content) ),
-        'Content-Type: {}\r\n' .format( _type(filename) ),
-        content,
-        '--{}--\r\n' .format( boundary )
-    ]
-    return '\r\n'.join(data), boundary
-
 class _Card:
     __dict__ = {}
     def __getattr__(self, __name):
@@ -78,16 +53,14 @@ class _Card:
 
 class BaseCard(_Card):
     'Base Card for dingbot'
+    __all__  = []
     __type__ = ''
-    __variable__ = {
-        'required' : [],'optional' : []
-    }
-    __all__ = __variable__['required'] + __variable__['optional']
+    __variable__ = {'required' : [],'optional' : []}
     def __init__(self):
         'Initialize basic data'
-        self.__doc__ = ', '.join(self.__all__)
         for item in self.__all__:
             self.__dict__[item] = None
+        self.__doc__ = ', '.join(self.__all__)
         
     def __call__(self, *args, **kwds):
         'Initialize and assign'
@@ -129,7 +102,7 @@ class BaseCard(_Card):
     def data_pack(self):
         'pack the data'
         if(not self.is_fill_all()):
-            self.data_fill()
+            self.auto_fill()
         return self._data()
 
     def data_send(self, api):
@@ -139,9 +112,10 @@ class BaseCard(_Card):
 
 
 class LinkCard(BaseCard):
+    __all__  = ['text', 'title', 'messageURL', 'picURL']
     __type__ = 'link'
     __variable__ = {
-        'required' : ['messageURL'],'optional':['text', 'title', 'picURL']
+        'required' : ['messageURL']
     }
     def _fill(self):
         html = _get(self.messageURL , head)
@@ -158,10 +132,9 @@ class LinkCard(BaseCard):
 
 
 class ImageCard(BaseCard):
+    __all__  = ['title', 'picPATH', 'picURL']
     __type__ = 'markdown'
-    __variable__ = {
-        'required' : ['file'],'optional':['text','picURL']
-    }
+    __variable__ = {'required' : ['picURL']}
     def _data(self):
         return {
             'title':self.title,
@@ -173,10 +146,9 @@ class ImageCard(BaseCard):
 
 
 class ItemCard(LinkCard):
+    __all__  = ['title', 'messageURL', 'picURL']
     __type__ = None
-    __variable__ = {
-        'required' : ['messageURL'],'optional':['title', 'picURL']
-    }
+    __variable__ = {'required' : ['messageURL']}
     def _data(self):
         return {
             'title' : self.title,
@@ -199,25 +171,28 @@ class FeedCard(BaseCard):
         }
 
 class FileCard(BaseCard):
+    __all__ = ['file','post_data','post_header']
     __type__ = 'link'
-    __variable__ = {
-        'required' : ['file'],'optional':['post_data', 'post_header','url']
-    }
+    __variable__ = {'required' : ['feeds']}
     def _fill(self):
-        self.post_data , boundary = _file(self.file)
-        self.post_header = {'User-Agent': 'curl/7.79.1','Accept': '*/*','Content-Type': 'multipart/form-data; boundary={}'.format(boundary)}
-        content = _post('https://file.io/?maxDownloads=99',self.post_data,self.post_header)
-        content = json.loads( content )
-        if(content[u'success']):
-            self.url = content[u'link']
-        else:
-            print(content)
+        def _guess_content_type(url):
+            n = url.rfind('.')
+            if n == -1:
+                return 'application/octet-stream'
+            ext = url[n:]
+            return mimetypes.types_map.get(ext, 'application/octet-stream')
 
-    def _data(self):
-        return {
-            'title':self.file,
-            'text':'文件',
-            'messageURL':self.url
-        }
-        
-        
+        boundary = '----------%s' % hex(int(time.time() * 1000))
+        with open(self.file) as fin:
+            content  = fin.read()
+            filename = getattr(fin, 'name', '')
+        data = [
+            '--{}'.format(boundary),
+            'Content-Disposition: form-data; name="file"; filename="{}"'.format(self.file),
+            'Content-Length: %d' % len(content),
+            'Content-Type: %s\r\n' % _guess_content_type(filename),
+            content,
+            '--%s--\r\n' % boundary
+        ]
+        self.post_data = '\r\n'.join(data), boundary
+        self.post_header = {'User-Agent': 'curl/7.79.1','Accept': '*/*','Content-Type': 'multipart/form-data; boundary={}'.format(boundary)}

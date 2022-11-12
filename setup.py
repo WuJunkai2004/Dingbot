@@ -1,5 +1,5 @@
 from distutils.core import setup
-
+import sys
 import dingbot
 
 try:
@@ -31,9 +31,10 @@ try:
     }
 
     setup(**kw)
+    sys.exit()
 except:
     pass
-
+'''
 try:
     kw = {
         "name": 'Dingbot',
@@ -60,3 +61,4 @@ try:
     setup(**kw)
 except:
     pass
+'''

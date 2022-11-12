@@ -18,10 +18,6 @@ import json
 import sys
 import time
 
-def Card(**kw):
-    'item1 = value1, item2 = value2 -> {"item1": value1, "item2": value2}'
-    return kw
-
 def _internet_connect(url, data, headers):
     'url, data, headers -> res'
     req = _u.Request(url, data, headers)
@@ -43,6 +39,9 @@ def _signature(webhook, secret, var = sys.version_info.major):
     hmac_code          = hmac.new(secret_enc, string_to_sign_enc, digestmod=hashlib.sha256).digest()
     sign               = _quote_plus(base64.b64encode(hmac_code))
     return '{}&timestamp={}&sign={}'.format(webhook, timestamp, sign)
+
+class Card(dict):
+    'item1 = value1, item2 = value2 -> {"item1": value1, "item2": value2}'
 
 class _configure_manage:
     'manage the Configuration file'
