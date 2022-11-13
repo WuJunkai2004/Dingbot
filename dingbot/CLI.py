@@ -174,6 +174,8 @@ if(__name__ == '__main__'):
     if(not sys.argv[1:]):
         success = install()
         if(success):
+            print("Dingbot CLI [version {}.0]".format(ver))
+            print("Please input \"Dingbot /?\" for more help\n")
             success.system('cmd')
 
     else:
