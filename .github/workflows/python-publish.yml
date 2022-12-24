@@ -40,12 +40,13 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         echo dingbot package start setuping
-        move setup/setup-dingbot.py setup.py
+
+        mv setup/setup-dingbot.py setup.py
         python setup.py sdist
         echo dingbot package setup succeed
 
         echo dingrobotpy package start setuping
-        move setup/setup-dingrobotpy.py setup.py
+        mv setup/setup-dingrobotpy.py setup.py
         python setup.py sdist
         echo dingobotpy package setup succeed
 
