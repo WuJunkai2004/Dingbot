@@ -1,7 +1,7 @@
 # coding=utf-8
 'A SDK for group robots of Dingtalk ( copyright )\nWu Junkai wrote it by python 3.7.7 , run in python 2.7.14, 3.8.1 and 3.8.7\n\nFor more information please view github.com/WuJunkai2004/Dingbot'
 __all__     = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingRaise', 'Manage']
-__version__ = '3.63.0'
+__version__ = '3.63.1'
 
 try:
     import urllib2 as _u

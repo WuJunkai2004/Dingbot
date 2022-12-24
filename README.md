@@ -1,7 +1,16 @@
 # Dingbot : 一个轻量级的SDK，为钉钉群机器人打造
 ## 介绍
 这是一个轻量级的SDK，依靠[钉钉支持文档](https://ding-doc.dingtalk.com/doc#/serverapi2/qf2nxq)而编写，支持所有机器人的操作。  
+本SDK有两个版本，分别为`Dingbot`与`DingRobotPy`。  
+| Dingbot | DingRobotPy |
+| --- | --- |
+| 仅有核心代码 | 附加其他功能，如`命令行`，`提取器` |
+| 无需第三方库 | 需前置`requests`库 |
 ## 安装
+```
+pip install DingBot
+```
+或
 ```
 pip install DingRobotPy
 ```
