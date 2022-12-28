@@ -32,7 +32,7 @@ deta = {
 'link':''}
 
 class config(dingbot._configure_manage):
-    __path__ = r'.\dingbot_cli.ini' 
+    __file__ = 'dingbot_cli.ini' 
     __inst__ = {u'robot':[]}
 
     def __call__(self):

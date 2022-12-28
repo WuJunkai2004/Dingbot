@@ -14,8 +14,8 @@ except ImportError:
     from __init__ import _internet_connect
 
 import json
-import mimetypes
 import re
+import requests
 
 import sys
 import time
@@ -30,42 +30,6 @@ def _search(reg, string):
         return re.search(reg, string).group()
     except BaseException:
         raise RuntimeWarning
-
-
-def _post(url, data, headers):
-    'post data to the url then get the response'
-    text = _internet_connect(url, data, headers).read()
-    text = text.decode('utf-8') if(sys.version_info.major == 3)else text
-    return text
-
-def _get(url, headers):
-    'get the response from url'
-    text = _internet_connect(url, None, headers).read()
-    text = text.decode('utf-8') if(sys.version_info.major == 3)else text
-    return text
-
-def _type(url):
-    n = url.rfind('.')
-    if n == -1:
-        return 'application/octet-stream'
-    ext = url[n:]
-    return mimetypes.types_map.get(ext, 'application/octet-stream')
-
-
-def _file(path):
-    boundary = '----------%s' % hex(int(time.time() * 1000))
-    with open(path) as fin:
-        content  = fin.read()
-        filename = getattr(fin, 'name', '')
-    data = [
-        '--{}'.format(boundary),
-        'Content-Disposition: form-data; name="file"; filename="{}"'.format(path),
-        'Content-Length: {}' .format( len(content) ),
-        'Content-Type: {}\r\n' .format( _type(filename) ),
-        content,
-        '--{}--\r\n' .format( boundary )
-    ]
-    return '\r\n'.join(data), boundary
 
 
 class _Card:
@@ -112,7 +76,7 @@ class LinkCard(BaseCard):
     __type__ = 'link'
     def __load__(self):
         self.messageUrl = self.uri
-        html = _get(self.messageUrl , head)
+        html = requests.get(self.messageUrl , headers = head).text
         ## title
         title = _search(r'<title.+?title>',html)
         title = _search(r'(?<=>).+?(?=<)',title)
@@ -171,12 +135,3 @@ class FeedCard(BaseCard):
 class FileCard(BaseCard):
     __all__ = ['file','post_data','post_header']
     __type__ = 'link'
-    def _fill(self):
-        def _guess_content_type(url):
-            n = url.rfind('.')
-            if n == -1:
-                return 'application/octet-stream'
-            ext = url[n:]
-            return mimetypes.types_map.get(ext, 'application/octet-stream')
-
-        self.post_header = {'User-Agent': 'curl/7.79.1','Accept': '*/*','Content-Type': 'multipart/form-data; boundary={}'.format(boundary)}

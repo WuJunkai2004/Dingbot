@@ -18,6 +18,9 @@ try:
         "url": 'https://github.com/WuJunkai2004/Dingbot',
         "download_url": 'https://github.com/WuJunkai2004/Dingbot',
         'packages':['dingbot'],
+        'install_requires':[
+            'requests'
+        ],
         "classifiers": [
             'Development Status :: 5 - Production/Stable',
             'Environment :: Web Environment',

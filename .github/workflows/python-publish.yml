@@ -39,15 +39,18 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        echo dingbot package start setuping
-        mv setup/setup-dingbot.py setup.py
-        python setup.py sdist
-        echo dingbot package setup succeed
-
-        echo dingrobotpy package start setuping
+        echo [Info] : dingrobotpy package start setuping
         mv setup/setup-dingrobotpy.py setup.py
         python setup.py sdist
-        echo dingobotpy package setup succeed
+        echo [Info] : dingobotpy package setup succeed
+
+        echo [Info] : dingbot package start setuping
+        mv setup/setup-dingbot.py setup.py
+        rm -f dingbot/Card.py
+        rm -f dingbot/CLI.py
+        rm -f dingbot/GUI.py
+        python setup.py sdist
+        echo [Info] : dingbot package setup succeed
 
         echo start to update
         twine upload dist/*

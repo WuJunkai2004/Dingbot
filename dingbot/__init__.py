@@ -1,7 +1,7 @@
 # coding=utf-8
 'A SDK for group robots of Dingtalk ( copyright )\nWu Junkai wrote it by python 3.7.7 , run in python 2.7.14, 3.8.1 and 3.8.7\n\nFor more information please view github.com/WuJunkai2004/Dingbot'
 __all__     = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingRaise', 'Manage']
-__version__ = '3.63.1'
+__version__ = '3.70.0'
 
 try:
     import urllib2 as _u
@@ -15,7 +15,9 @@ import hashlib
 import hmac
 
 import json
+import os
 import sys
+
 import time
 
 def _internet_connect(url, data, headers):
@@ -45,29 +47,28 @@ class Card(dict):
 
 class _configure_manage:
     'manage the Configuration file'
-    __path__ = None
+    __file__ = None
+    __path__ = os.path.join(os.environ['HOME'], '.dingbot')
     __inst__ = {}
-    def __init__(self, path = None):
-        if(path):
-            self.path = path
-        else:
-            self.path = self.__path__
+    def __init__(self):
+        if(not os.path.exists(self.__path__)):
+            os.mkdir(self.__path__)
         self.load()
 
     def load(self):
         try:
-            with open(self.path, 'r') as fin:
+            with open(os.path.join(self.__path__, self.__file__), 'r') as fin:
                 self.data = json.load(fin)
         except IOError:
             self.data = self.__inst__
 
     def save(self):
-        with open(self.path, 'w') as fout:
+        with open(os.path.join(self.__path__, self.__file__), 'w') as fout:
             json.dump(self.data, fout)
 
 
 class config(_configure_manage):
-    __path__ = r'.\config.json'
+    __file__ = 'config.json'
     __inst__ = {}
 
 

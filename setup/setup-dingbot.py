@@ -18,11 +18,7 @@ try:
         "author_email": 'wujunkai20041123@outlook.com',
         "url": 'https://github.com/WuJunkai2004/Dingbot',
         "download_url": 'https://github.com/WuJunkai2004/Dingbot',
-        'include_package_data':True,
-        'package_data':{
-            'dingbot':["__init__.py"]
-        },
-        'packages':[],
+        'packages':['dingbot'],
         "classifiers": [
             'Development Status :: 5 - Production/Stable',
             'Environment :: Web Environment',
