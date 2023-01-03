@@ -8,10 +8,8 @@ __all__ = [ 'BaseCard',   #done
             'ItemCard', 
             'LinkCard']   #done
 
-try:
-    from dingbot import _internet_connect
-except ImportError:
-    from __init__ import _internet_connect
+from dingbot import config
+from dingbot import DingError
 
 import json
 import re
@@ -61,10 +59,10 @@ class BaseCard(_Card):
 
     def send(self,API):
         API.__api__ = self.__type__
-        print(dict( zip(
+        '''print(dict( zip(
             self.__all__,
             [self.__getattr__(item) for item in self.__all__]
-        ) ))
+        ) ))'''
         API.send( **dict( zip(
             self.__all__,
             [self.__getattr__(item) for item in self.__all__]
@@ -93,43 +91,36 @@ class LinkCard(BaseCard):
 
 
 class ImageCard(BaseCard):
-    __all__  = ['title', 'picPATH', 'picURL']
+    __all__  = ['title', 'picURL']
     __type__ = 'markdown'
-    __variable__ = {'required' : ['picURL']}
-    def _data(self):
-        return {
-            'title':self.title,
-            'text' :'![]({})'.format(self.picURL)
-        }
+    def __load__(self):
+        img = config()
+        get_token = requests.post(img.data['image']['URL']+'token',
+                                  json = {
+                                    'username' : img.data['image']['username'],
+                                    'password' : img.data['image']['password']
+                                    })
+        if(not get_token.json()['success']):
+            raise DingError('get token unsuccess')
+        else:
+            token = get_token.json()['data']['json']
 
-    def _fill(self):
-        pass
+        print(token)
+
 
 
 class ItemCard(LinkCard):
     __all__  = ['title', 'messageURL', 'picURL']
     __type__ = None
-    __variable__ = {'required' : ['messageURL']}
-    def _data(self):
-        return {
-            'title' : self.title,
-            'messageURL' : self.messageURL,
-            'picURL' : self.picURL
-        }
+    def __load__(self):
+        return super().__load__()
 
 
 class FeedCard(BaseCard):
     __all__ = ['feeds']
     __type__ = 'feedCard'
-    __variable__ = {'required' : ['feeds']}
-    def _fill(self):
-        for item in self.feeds:
-            item.auto_fill()
-
-    def _data(self):
-        return {
-            'links': [item.pack_data() for item in self.feeds]
-        }
+    def __load__(self):
+        return super().__load__()
 
 
 class FileCard(BaseCard):

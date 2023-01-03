@@ -1,7 +1,7 @@
 # coding=utf-8
 'A SDK for group robots of Dingtalk ( copyright )\nWu Junkai wrote it by python 3.7.7 , run in python 2.7.14, 3.8.1 and 3.8.7\n\nFor more information please view github.com/WuJunkai2004/Dingbot'
 __all__     = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingRaise', 'Manage']
-__version__ = '3.70.0'
+__version__ = '3.71.0'
 
 try:
     import urllib2 as _u
@@ -19,6 +19,12 @@ import os
 import sys
 
 import time
+
+try:
+    HOME = os.environ['HOME']
+except KeyError:
+    HOME = '.'
+    print('[Environment] : Failed to find user folder')
 
 def _internet_connect(url, data, headers):
     'url, data, headers -> res'
@@ -48,7 +54,7 @@ class Card(dict):
 class _configure_manage:
     'manage the Configuration file'
     __file__ = None
-    __path__ = os.path.join(os.environ['HOME'], '.dingbot')
+    __path__ = os.path.join(HOME, '.dingbot')
     __inst__ = {}
     def __init__(self):
         if(not os.path.exists(self.__path__)):
