@@ -1,7 +1,7 @@
 # coding=utf-8
 'A SDK for group robots of Dingtalk ( copyright )\nWu Junkai wrote it by python 3.7.7 , run in python 2.7.14, 3.8.1 and 3.8.7\n\nFor more information please view github.com/WuJunkai2004/Dingbot'
-__all__     = ['Card', 'DingAPI', 'DingError', 'DingLimit', 'DingRaise', 'Manage']
-__version__ = '3.75.0'
+__all__     = ['card', 'DingAPI', 'DingError', 'DingLimit', 'DingRaise', 'manage']
+__version__ = '3.76.0'
 
 try:
     import urllib2 as _u
@@ -24,17 +24,12 @@ try:
     HOME = os.environ['HOME']
 except KeyError:
     HOME = '.'
-    print('[Environment] : Failed to find user folder')
-
-def _internet_connect(url, data, headers):
-    'url, data, headers -> res'
-    req = _u.Request(url, data, headers)
-    res = _u.urlopen(req)
-    return res
+    sys.stderr.write('[Environment] : Failed to find user folder')
 
 def post(url, data):
     'post data to the url then get the response'
-    text = _internet_connect(url, data, {'Content-Type': 'application/json'}).read()
+    requ = _u.Request(url, data, {'Content-Type': 'application/json'})
+    text = _u.urlopen(requ).read()
     text = text.decode('utf-8') if(sys.version_info.major == 3)else text
     return text
 
@@ -47,9 +42,6 @@ def _signature(webhook, secret, var = sys.version_info.major):
     hmac_code          = hmac.new(secret_enc, string_to_sign_enc, digestmod=hashlib.sha256).digest()
     sign               = _quote_plus(base64.b64encode(hmac_code))
     return '{}&timestamp={}&sign={}'.format(webhook, timestamp, sign)
-
-class Card(dict):
-    'item1 = value1, item2 = value2 -> {"item1": value1, "item2": value2}'
 
 class _configure_manage:
     'manage the Configuration file'
@@ -72,11 +64,9 @@ class _configure_manage:
         with open(os.path.join(self.__path__, self.__file__), 'w') as fout:
             json.dump(self.data, fout)
 
-
 class config(_configure_manage):
     __file__ = 'config.json'
     __inst__ = {}
-
 
 class _dingtalk_robot_manage:
     'manage dingtalk robot'
@@ -143,7 +133,7 @@ class _dingtalk_robot_api:
 class DingError(RuntimeError):
     'the Error for dingbot'
 
-class Manage(_dingtalk_robot_manage):
+class manage(_dingtalk_robot_manage):
     'standard dingtalk robot manager'
 
 class DingAPI(_dingtalk_robot_api):

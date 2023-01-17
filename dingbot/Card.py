@@ -1,10 +1,8 @@
-# coding=utf-8
-
-__version__ = '0.01.0'
+__version__ = '0.03.0'
 __all__ = [ 'BaseCard',   #done
             'FeedCard', 
             'FileCard',
-            'ImageCard', 
+            'ImageCard',  #done
             'ItemCard', 
             'LinkCard']   #done
 
@@ -22,12 +20,25 @@ user = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, lik
 acce = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
 head = {'User-Agent': user}
 
+errl = 1 # 1 is throw all of error, and 0 is ingore all of error
+
+def _error_level(level):
+    global errl
+    errl = level
+
+def _error_log(string:str, is_error:bool = False) -> None:
+    if(errl and is_error):
+        raise RuntimeError(string)
+    elif(errl):
+        sys.stderr(string)
+
 def _search(reg, string):
     'using reg to search from string'
     try:
         return re.search(reg, string).group()
     except BaseException:
-        raise RuntimeWarning
+        _error_log('Can not search the RegExp in the string', True)
+        return ''
 
 
 class _Card:
@@ -47,9 +58,13 @@ class BaseCard(_Card):
     __type__ = ''
     def __init__(self, URI):
         self.uri = URI
+        self.data = {}
 
     def __load__(self):
-        raise RuntimeError('Can not run without any other change')
+        _error_log('Can not run without any other change', True)
+
+    def __pack__(self):
+        return dict(zip(self.__all__, [self.__getattr__(item) for item in self.__all__]))
 
     def post(self):
         return self.__load__()
@@ -59,14 +74,9 @@ class BaseCard(_Card):
 
     def send(self,API):
         API.__api__ = self.__type__
-        '''print(dict( zip(
-            self.__all__,
-            [self.__getattr__(item) for item in self.__all__]
-        ) ))'''
-        API.send( **dict( zip(
-            self.__all__,
-            [self.__getattr__(item) for item in self.__all__]
-        ) ) )
+        self.data = self.__pack__()
+        _error_log(self.data)
+        return API.send(**self.data)
 
 
 class LinkCard(BaseCard):
@@ -86,43 +96,55 @@ class LinkCard(BaseCard):
         ## text
         text = self.messageUrl
         self.text = text
-
-        print({"title":title,"image":image,"text":text})
+        _error_log({"title":title,"image":image,"text":text})
 
 
 class ImageCard(BaseCard):
-    __all__  = ['title', 'picURL']
+    __all__  = ['title', 'text']
     __type__ = 'markdown'
     def __load__(self):
-        img = config()
-        get_token = requests.post(img.data['image']['URL']+'token',
-                                  json = {
-                                    'username' : img.data['image']['username'],
-                                    'password' : img.data['image']['password']
-                                    })
-        if(not get_token.json()['success']):
-            raise DingError('get token unsuccess')
+        cfg = config()
+        img = cfg.data['image']
+        if('token' not in img.keys()):
+            get_token = requests.post(  img['URL']+'token',
+                                        data = {'username':img['username'], 'password':img['password']} )
+            if(not get_token.json()['success']):
+                raise DingError('get token unsuccess')
+            else:
+                token = get_token.json()['data']['token']
+                cfg.data['image']['token'] = token
+                cfg.save()
         else:
-            token = get_token.json()['data']['json']
-
-        print(token)
-
+            token = img['token']
+        headers = {'Authorization':token}
+        files = {'smfile':open(self.uri,'rb'), 'format':'json'}
+        post_img = requests.post(   img['URL']+'upload',
+                                    files = files ,
+                                    headers = headers   )
+        if(not post_img.json()['success']):
+            raise DingError('post image error')
+        self.title = '[image]'
+        self.text = '![]({})'.format(post_img.json()['data']['url'])
 
 
 class ItemCard(LinkCard):
     __all__  = ['title', 'messageURL', 'picURL']
     __type__ = None
     def __load__(self):
-        return super().__load__()
+        LinkCard.__load__(self)
+        self.messageURL = self.messageUrl
+        self.picURL     = self.picUrl
 
 
 class FeedCard(BaseCard):
-    __all__ = ['feeds']
+    __all__ = ['links']
     __type__ = 'feedCard'
     def __load__(self):
-        return super().__load__()
+        _error_log(self.__pack__())
 
 
-class FileCard(BaseCard):
-    __all__ = ['file','post_data','post_header']
+class FileCard(LinkCard):
+    __all__  = ['text', 'title', 'messageUrl', 'picUrl']
     __type__ = 'link'
+    def __load__(self):
+        return super().__load__()
