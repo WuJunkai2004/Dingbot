@@ -1,9 +1,9 @@
-__version__ = '0.03.0'
-__all__ = [ 'BaseCard',   #done
-            'FeedCard', 
+__version__ = '0.04.0'
+__all__ = [ 'BaseCard',   #debuging
+            'FeedCard',   #debuging
             'FileCard',
             'ImageCard',  #done
-            'ItemCard', 
+            'ItemCard',   #done
             'LinkCard']   #done
 
 from dingbot import config
@@ -20,17 +20,15 @@ user = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, lik
 acce = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
 head = {'User-Agent': user}
 
-errl = 1 # 1 is throw all of error, and 0 is ingore all of error
+error_level = 1 # 1 is throw all of error, 
+                # 0 is ingore all of error,
+                # 2 is throw all of warming as error
 
-def _error_level(level):
-    global errl
-    errl = level
-
-def _error_log(string:str, is_error:bool = False) -> None:
-    if(errl and is_error):
-        raise RuntimeError(string)
-    elif(errl):
-        sys.stderr(string)
+def _error_log(string:str, is_error:bool = False, error_type = RuntimeError) -> None:
+    if(error_level + is_error >= 2):
+        raise error_type(string)
+    elif(error_level):
+        sys.stderr.write(str(string) + '\n')
 
 def _search(reg, string):
     'using reg to search from string'
@@ -41,13 +39,12 @@ def _search(reg, string):
         return ''
 
 
-class _Card:
-    __dict__ = {}
+class _Card(dict):
     def __getattr__(self, __name):
         try:
             return self.__dict__[__name]
-        except KeyError:
-            return ''
+        except KeyError as e:
+            raise e
         
     def __setattr__(self, __name, __value):
         self.__dict__[__name] = __value
@@ -63,8 +60,11 @@ class BaseCard(_Card):
     def __load__(self):
         _error_log('Can not run without any other change', True)
 
-    def __pack__(self):
-        return dict(zip(self.__all__, [self.__getattr__(item) for item in self.__all__]))
+    def __repr__(self) -> str:
+        return str(dict(zip(self.__all__, [self.__getattr__(item) for item in self.__all__])))
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
     def post(self):
         return self.__load__()
@@ -74,7 +74,7 @@ class BaseCard(_Card):
 
     def send(self,API):
         API.__api__ = self.__type__
-        self.data = self.__pack__()
+        self.data = eval(repr(self))
         _error_log(self.data)
         return API.send(**self.data)
 
@@ -139,8 +139,11 @@ class ItemCard(LinkCard):
 class FeedCard(BaseCard):
     __all__ = ['links']
     __type__ = 'feedCard'
+    def __init__(self):
+        BaseCard.__init__(self, '')
+
     def __load__(self):
-        _error_log(self.__pack__())
+        _error_log(self)
 
 
 class FileCard(LinkCard):
